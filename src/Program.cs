@@ -111,12 +111,13 @@ class Program
 
     private static void DrawFont(byte character, int startX, int startY)
     {
-        int fontStart = 0x50;
+
+        //TODO: Do we really need startX and startY?
 
         //this puts 0 to display for testing
         for (int row = 0; row < 5; row++)
         {
-            byte fontByte = memory[fontStart + row];
+            byte fontByte = memory[character + row];
             for (int col = 0; col < 4; col++)
             {
                 if ((fontByte & (0x80 >> col)) != 0)
