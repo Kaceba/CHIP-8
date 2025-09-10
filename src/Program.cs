@@ -82,7 +82,10 @@ class Program
 
             display = new bool[64 * 32]; // Clear display each frame for testing
 
-            DrawFont(0x50, 0, 0);
+            DrawCharacter(0x50, 0, 0);
+            DrawCharacter(0x55, 4, 0);
+            DrawCharacter(0x5A, 1 + 8, 0);
+            DrawCharacter(0x5F, 2 + 12, 0);
 
             for (int y = 0; y < 32; y++)
             {
@@ -109,7 +112,7 @@ class Program
 
     }
 
-    private static void DrawFont(byte character, int startX, int startY)
+    private static void DrawCharacter(byte character, int startX, int startY)
     {
 
         //TODO: Do we really need startX and startY?
@@ -117,13 +120,13 @@ class Program
         //this puts 0 to display for testing
         for (int row = 0; row < 5; row++)
         {
-            byte fontByte = memory[character + row];
+            byte CharacterByte = memory[character + row];
             for (int col = 0; col < 4; col++)
             {
-                if ((fontByte & (0x80 >> col)) != 0)
+                if ((CharacterByte & (0x80 >> col)) != 0)
                 {
-                    int x = col;
-                    int y = row;
+                    int x = startX + col;
+                    int y = startY + row;
                     if (x < 64 && y < 32)
                     {
                         display[y * 64 + x] = true;
