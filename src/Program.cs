@@ -17,6 +17,25 @@ class Program
     static byte[] memory = new byte[0x1000];
     static bool[] display = new bool[64 * 32];
     static byte[] registers = new byte[16];
+    static ushort PC = 0x200; 
+
+    void testprogram()
+    {
+        //set memory for testing, basically loading the program into memory
+        memory[0x200] = 0x00;
+        memory[0x201] = 0xE0; 
+        memory[0x202] = 0x12;
+        memory[0x203] = 0x00;
+    }
+
+    static ushort FetchInstruction()
+    {
+        //fetch 2 bytes from memory at the current PC location, combine them into a single instruction,
+        //and increment the PC by 2, 8bit big-endian shifting
+        ushort instruction = (ushort)((memory[PC] << 8) | memory[PC + 1]);
+        PC += 2;
+        return instruction;
+    }
 
     static bool isRunning = false;
 
@@ -50,7 +69,6 @@ class Program
             memory[0x50 + i] = FontSet[i];
         }
 
-
         //~SDL2 startup
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
         IntPtr window = SDL.SDL_CreateWindow(WINDOW_NAME, DRAW_START_X, DRAW_START_Y, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TYPE);
@@ -74,18 +92,24 @@ class Program
 
         while (isRunning)
         {
+            //1. Emulator cycle would go here (fetch, decode, execute)
+
+
+
+
+            display = new bool[64 * 32]; // Clear display each frame for testing
+
+            //DrawCharacter(0x50, 0, 0);
+            //DrawCharacter(0x55, 4, 0);
+            //DrawCharacter(0x5A, 1 + 8, 0);
+            //DrawCharacter(0x5F, 2 + 12, 0);
+
+            //2. Translate emulator information to SDL2 for rendering
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
             {
                 if (e.type == SDL.SDL_EventType.SDL_QUIT)
                     isRunning = false;
             }
-
-            display = new bool[64 * 32]; // Clear display each frame for testing
-
-            DrawCharacter(0x50, 0, 0);
-            DrawCharacter(0x55, 4, 0);
-            DrawCharacter(0x5A, 1 + 8, 0);
-            DrawCharacter(0x5F, 2 + 12, 0);
 
             for (int y = 0; y < 32; y++)
             {
@@ -101,6 +125,7 @@ class Program
                 }
             }
 
+            //3. Handle SDL2 events and Rendering
             SDL.SDL_RenderPresent(renderer);
             SDL.SDL_RenderClear(renderer);
             SDL.SDL_Delay(16);
@@ -109,14 +134,10 @@ class Program
         SDL.SDL_DestroyRenderer(renderer);
         SDL.SDL_DestroyWindow(window);
         SDL.SDL_Quit();
-
     }
 
     private static void DrawCharacter(byte character, int startX, int startY)
     {
-
-        //TODO: Do we really need startX and startY?
-
         //this puts 0 to display for testing
         for (int row = 0; row < 5; row++)
         {
