@@ -42,7 +42,9 @@ class Program
         while (isRunning)
         {
             //1. Emulator cycle would go here (fetch, decode, execute)
-            var nextstuff = CPU.FetchInstruction();
+            ushort FetchedInstruction = CPU.FetchInstruction();
+            var DecodedInstuction = CPU.Decode(FetchedInstruction, display);
+            CPU.Execute(DecodedInstuction);
 
             //2. Translate emulator information to SDL2 for rendering
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)

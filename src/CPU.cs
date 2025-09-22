@@ -18,6 +18,11 @@ namespace CHIP_8
             return instruction;
         }
 
+        internal void Decode(ushort instruction, Display display)
+        {
+            
+        }
+
         internal void LoadProgram(byte[] program)
         {
             //load program into memory starting at 0x200
