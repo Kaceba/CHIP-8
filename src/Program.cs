@@ -11,7 +11,6 @@ class Program
     {
         //~CHIP-8 startup
         CPU CPU = new CPU();
-        Display display = new Display();
 
         //Fontset loading
         for (int i = 0; i < FONTSET.Length; i++)
@@ -43,8 +42,7 @@ class Program
         {
             //1. Emulator cycle would go here (fetch, decode, execute)
             ushort FetchedInstruction = CPU.FetchInstruction();
-            var DecodedInstuction = CPU.Decode(FetchedInstruction, display);
-            CPU.Execute(DecodedInstuction);
+            CPU.DecodeExecute(FetchedInstruction);
 
             //2. Translate emulator information to SDL2 for rendering
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
@@ -57,7 +55,7 @@ class Program
             {
                 for (int x = 0; x < DISPLAY_WIDTH; x++)
                 {
-                    if (display.getPixel(x, y) == true)
+                    if (CPU.display.getPixel(x, y) == true)
                         SDL.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White for pixels that are on
                     else
                         SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black for pixels that are off
