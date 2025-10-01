@@ -27,7 +27,11 @@ namespace CHIP_8
 
         // Font
         internal const int FONT_HEIGHT = 5;                   
-        internal const int FONT_WIDTH = 4;                    
+        internal const int FONT_WIDTH = 4;     
+        
+        // Sprites
+        internal const int SPRITE_MAX_HEIGHT = 15;            // Max height for sprites (0-F), idk if i need this
+        internal const int SPRITE_MAX_WIDTH = 8;              // Max width for sprites (8 bits)
 
         //Font allocation
         internal static readonly byte[] FONTSET = new byte[]

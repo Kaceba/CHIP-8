@@ -58,6 +58,7 @@ namespace CHIP_8
                     }
                     break;
                 case 0x1:
+                    PC = nnn; //1NNN: Jump to address NNN
                     break;
                 case 0x2:
                     break;
@@ -68,20 +69,29 @@ namespace CHIP_8
                 case 0x5:
                     break;
                 case 0x6:
+                    registers[x] = nn; //6XNN: Set VX to NN
                     break;
                 case 0x7:
+                    registers[x] += nn; //7XNN: Add NN to VX
                     break;
                 case 0x8:
                     break;
                 case 0x9:
                     break;
                 case 0xA:
+                    I = nnn; //ANNN: Set I to the address NNN
                     break;
                 case 0xB:
                     break;
                 case 0xC:
                     break;
                 case 0xD:
+                    registers[0xF] = 0; //reset VF
+                    bool collision = display.DrawSprite(memory, I, registers[x], registers[y], n);
+                    if (collision)
+                    {
+                        registers[0xF] = 1; //set VF to 1 if there was a collision
+                    }
                     break;
                 case 0xE:
                     break;

@@ -38,11 +38,19 @@ class Program
             h = scaleY
         };
 
+        //Load program into memory
+        CPU.LoadProgram(File.ReadAllBytes("C:\\.PRE-DESKTOP\\Code\\Csharp\\CHIP-8\\roms\\IBM Logo.ch8"));
+
         while (isRunning)
         {
-            //1. Emulator cycle would go here (fetch, decode, execute)
-            ushort FetchedInstruction = CPU.FetchInstruction();
-            CPU.DecodeExecute(FetchedInstruction);
+            for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
+            {
+                if (CPU.PC < PROGRAM_START || CPU.PC >= MEMORY_SIZE - 1) break;
+
+                //1. Emulator cycle would go here (fetch, decode, execute)
+                ushort FetchedInstruction = CPU.FetchInstruction();
+                CPU.DecodeExecute(FetchedInstruction);
+            }
 
             //2. Translate emulator information to SDL2 for rendering
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
