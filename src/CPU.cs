@@ -75,6 +75,42 @@ namespace CHIP_8
                     registers[x] += nn; //7XNN: Add NN to VX
                     break;
                 case 0x8:
+                    switch (n)
+                    {
+                        case 0x0:
+                            registers[x] = registers[y]; //mem copy of value
+                            break;
+                        case 0x1:
+                            registers[x] |= registers[y]; //OR
+                            break;
+                        case 0x2:
+                            registers[x] &= registers[y]; //AND
+                            break;
+                        case 0x3:
+                            registers[x] ^= registers[y]; //XOR
+                            break;
+                        case 0x4:
+                            int sum = registers[x] + registers[y]; //sum with carry
+                            registers[0xF] = (byte)(sum > 255 ? 1 : 0);
+                            registers[x] = (byte)(sum);
+                            break;
+                        case 0x5:
+                            registers[0xF] = (byte)(registers[x] > registers[y] ? 1 : 0); //sub with borrow
+                            registers[x] = (byte)(registers[x] - registers[y]);
+                            break;
+                        case 0x6:
+                            registers[0xF] = (byte)(registers[x] & 0x1);
+                            registers[x] >>= 1; //shift right
+                            break;
+                        case 0x7:
+                            registers[0xF] = (byte)(registers[y] > registers[x] ? 1 : 0); //reverse sub with borrow (reverse means swap the operands)
+                            registers[x] = (byte)(registers[y] - registers[x]);
+                            break;
+                        case 0xE:
+                            registers[0xF] = (byte)((registers[x] & 0x80) >> 7);
+                            registers[x] <<= 1; //shift left
+                            break;
+                    }
                     break;
                 case 0x9:
                     break;
