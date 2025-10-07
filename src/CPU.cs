@@ -1,4 +1,5 @@
-﻿using static CHIP_8.Constants;
+﻿using System.Globalization;
+using static CHIP_8.Constants;
 
 namespace CHIP_8
 {
@@ -63,10 +64,16 @@ namespace CHIP_8
                 case 0x2:
                     break;
                 case 0x3:
+                    if(registers[x] == nn)
+                        PC += 2; //skip next instruction if VX == NN
                     break;
                 case 0x4:
+                    if(registers[x] != nn)
+                        PC += 2; //skip next instruction if VX != NN
                     break;
                 case 0x5:
+                    if (registers[x] == registers[y])
+                        PC += 2; //skip next instruction if VX == VY   
                     break;
                 case 0x6:
                     registers[x] = nn; //6XNN: Set VX to NN
@@ -95,7 +102,7 @@ namespace CHIP_8
                             registers[x] = (byte)(sum);
                             break;
                         case 0x5:
-                            registers[0xF] = (byte)(registers[x] > registers[y] ? 1 : 0); //sub with borrow
+                            registers[0xF] = (byte)(registers[x] >= registers[y] ? 1 : 0); //sub with borrow
                             registers[x] = (byte)(registers[x] - registers[y]);
                             break;
                         case 0x6:
@@ -103,16 +110,18 @@ namespace CHIP_8
                             registers[x] >>= 1; //shift right
                             break;
                         case 0x7:
-                            registers[0xF] = (byte)(registers[y] > registers[x] ? 1 : 0); //reverse sub with borrow (reverse means swap the operands)
+                            registers[0xF] = (byte)(registers[y] >= registers[x] ? 1 : 0); //reverse sub with borrow (reverse means swap the operands)
                             registers[x] = (byte)(registers[y] - registers[x]);
                             break;
                         case 0xE:
-                            registers[0xF] = (byte)((registers[x] & 0x80) >> 7);
+                            registers[0xF] = (byte)((registers[x] & 0x80) >> 7); //we shift the MSB to LSB position because 8 bits and 7 positions
                             registers[x] <<= 1; //shift left
                             break;
                     }
                     break;
                 case 0x9:
+                    if(registers[x] != registers[y])
+                        PC += 2; //skip next instruction if VX != VY
                     break;
                 case 0xA:
                     I = nnn; //ANNN: Set I to the address NNN
