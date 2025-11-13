@@ -3,7 +3,7 @@ using static CHIP_8.Constants;
 
 namespace CHIP_8;
 
-class Program
+static class Program
 {
     static bool isRunning = true;
 
@@ -63,7 +63,7 @@ class Program
             {
                 for (int x = 0; x < DISPLAY_WIDTH; x++)
                 {
-                    if (CPU.display.getPixel(x, y) == true)
+                    if (CPU.display.getPixel(x, y))
                         SDL.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White for pixels that are on
                     else
                         SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black for pixels that are off
