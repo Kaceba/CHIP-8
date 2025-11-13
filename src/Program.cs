@@ -1,4 +1,4 @@
-﻿using SDL2;
+using SDL2;
 using static CHIP_8.Constants;
 
 namespace CHIP_8;
@@ -38,8 +38,8 @@ class Program
             h = scaleY
         };
 
-        //Load program into memory
-        CPU.LoadProgram(File.ReadAllBytes("C:\\.PRE-DESKTOP\\Code\\Csharp\\CHIP-8\\roms\\IBM Logo.ch8"));
+        //Load program into memory this will be changed
+        CPU.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
 
         while (isRunning)
         {
@@ -86,4 +86,3 @@ class Program
 
 
 }
-

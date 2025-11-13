@@ -6,10 +6,14 @@ namespace CHIP_8
     internal class CPU
     {
         internal Display display = new Display();
+        internal ushort[] stack = new ushort[16];
         internal byte[] memory = new byte[MEMORY_SIZE]; //4KB memory
         internal byte[] registers = new byte[16];
         internal ushort PC = 0x200;
+        internal byte SP = 0; //stack pointer
         internal ushort I;
+        internal readonly Random rand = new Random();
+
 
         internal ushort FetchInstruction()
         {
@@ -50,8 +54,8 @@ namespace CHIP_8
                             break;
                         case 0xEE: //00EE: Return from subroutine
                             //set PC to the address at the top of the stack, then decrement the stack pointer
-                            //SP--;
-                            //PC = stack[SP];
+                            SP--;
+                            PC = stack[SP];
                             break;
                         default:
                             //0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
@@ -62,6 +66,10 @@ namespace CHIP_8
                     PC = nnn; //1NNN: Jump to address NNN
                     break;
                 case 0x2:
+                    //2NNN: Call subroutine at NNN
+                    stack[SP] = PC;
+                    SP++;
+                    PC = nnn;
                     break;
                 case 0x3:
                     if(registers[x] == nn)
@@ -127,8 +135,11 @@ namespace CHIP_8
                     I = nnn; //ANNN: Set I to the address NNN
                     break;
                 case 0xB:
+                    PC = (ushort)(nnn + registers[0]); //BNNN: Jump to address NNN + V0
                     break;
                 case 0xC:
+                    byte randomByte = (byte)rand.Next(0, 256); //generate random byte
+                    registers[x] = (byte)(randomByte & nn); //CXNN: Set VX to result of random byte AND NN
                     break;
                 case 0xD:
                     registers[0xF] = 0; //reset VF
@@ -139,9 +150,44 @@ namespace CHIP_8
                     }
                     break;
                 case 0xE:
+                    //Still missing EX9E, EXA1 needs input first
                     break;
                 case 0xF:
-                    break;
+                if (nn == 0x1E)
+                    {
+                        I += registers[x]; //FX1E: Add VX to I
+                    }
+                    else if (nn == 0x29)
+                    {
+                        I = (ushort)(FONTSET_START + (registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
+                    }
+                    else if (nn == 0x33)
+                    {
+                        //FX33: Store BCD representation of VX in memory locations I, I+1, and I+2
+                        byte value = registers[x];
+                        memory[I] = (byte)(value / 100); //hundreds
+                        memory[I + 1] = (byte)((value / 10) % 10); //tens
+                        memory[I + 2] = (byte)(value % 10); //ones
+                    }
+                    else if (nn == 0x55)
+                    {
+                        //FX55: Store registers V0 through VX in memory starting at location I
+                        for (int i = 0; i <= x; i++)
+                        {
+                            memory[I + i] = registers[i];
+                        }
+                    }
+                    else if (nn == 0x65)
+                    {
+                        //FX65: Read registers V0 through VX from memory starting at location I
+                        for (int i = 0; i <= x; i++)
+                        {
+                            registers[i] = memory[I + i];
+                        }
+                    }
+                    //Still missing FX07, FX15, FX18, needs timers first
+                    //Still missing FX0A needs input first
+                break;
             }
         }
 
