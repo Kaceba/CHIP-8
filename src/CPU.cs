@@ -62,6 +62,7 @@ namespace CHIP_8
                             break;
                         default:
                             //0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
+                            
                             break;
                     }
                     break;
@@ -188,8 +189,24 @@ namespace CHIP_8
                             registers[i] = memory[I + i];
                         }
                     }
-                    //Still missing FX07, FX15, FX18, needs timers first
-                    //Still missing FX0A needs input first
+                    else if (nn == 0x07)
+                    {
+                        registers[x] = delayTimer; //FX07: Set VX to the value of the delay timer
+                    }
+                    else if (nn == 0x15)
+                    {
+                        delayTimer = registers[x]; //FX15: Set the delay timer to VX
+                    }
+                    else if (nn == 0x18)
+                    {
+                        soundTimer = registers[x]; //FX18: Set the sound timer to VX
+                    }
+                    else if (nn == 0x0A)
+                    {
+                        //Still missing FX0A needs input first
+                        //FX0A: Wait for a key press, store the value of the key in VX
+                        //Not implemented yet, needs input handling
+                    }
                 break;
             }
         }
