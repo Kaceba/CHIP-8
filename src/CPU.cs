@@ -9,6 +9,7 @@ namespace CHIP_8
         internal ushort[] stack = new ushort[16];
         internal byte[] memory = new byte[MEMORY_SIZE]; //4KB memory
         internal byte[] registers = new byte[16];
+        internal bool[] keys = new bool[16];
         internal ushort PC = 0x200;
         internal byte SP = 0; //stack pointer
         internal ushort I;
@@ -62,7 +63,7 @@ namespace CHIP_8
                             break;
                         default:
                             //0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
-                            
+
                             break;
                     }
                     break;
