@@ -5,54 +5,57 @@ namespace CHIP_8;
 
 static class Program
 {
-    static bool isRunning = true;
+    private static bool isRunning = true;
+    private static nint _window;
+    private static nint _renderer;
+    private static int _scaleX;
+    private static int _scaleY;
+    private static SDL.SDL_Rect _rect;
+    private static Cpu _cpu = new Cpu();
 
     static void Main(string[] args)
     {
-        //~CHIP-8 startup
-        CPU CPU = new CPU();
 
         //Fontset loading
         for (int i = 0; i < FONTSET.Length; i++)
         {
-            CPU.memory[FONTSET_START + i] = FONTSET[i];
+            _cpu.memory[FONTSET_START + i] = FONTSET[i];
         }
 
         //~SDL2 startup
-        SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+        SDL2Startup();
 
-        IntPtr window = SDL.SDL_CreateWindow(WINDOW_NAME, SDL_DRAW_START_X, SDL_DRAW_START_Y, SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, SDL_WINDOW_TYPE);
-        IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
-
-        SDL.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL.SDL_RenderDrawPoint(renderer, 0, 0);
-
-        int scaleX = SDL_WINDOW_WIDTH / DISPLAY_WIDTH;
-        int scaleY = SDL_WINDOW_HEIGHT / DISPLAY_HEIGHT;
-
-        SDL.SDL_Rect rect = new SDL.SDL_Rect
-        {
-            x = 0,
-            y = 0,
-            w = scaleX,
-            h = scaleY
-        };
-
-        //Load program into memory this will be changed
-        CPU.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
+        _cpu.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
 
         while (isRunning)
         {
+            HandleTimerLogic();
+
             for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
             {
-                if (CPU.PC < PROGRAM_START || CPU.PC >= MEMORY_SIZE - 1) break;
+                if (_cpu.PC < PROGRAM_START || _cpu.PC >= MEMORY_SIZE - 1) break;
 
-                //1. Emulator cycle would go here (fetch, decode, execute)
-                ushort FetchedInstruction = CPU.FetchInstruction();
-                CPU.DecodeExecute(FetchedInstruction);
+                //1. Emulator cycle goes here (fetch, decode, execute)
+                ushort FetchedInstruction = _cpu.FetchInstruction();
+                _cpu.DecodeExecute(FetchedInstruction);
             }
 
             //2. Translate emulator information to SDL2 for rendering
+            HandleEventsAndPrepareFrame();
+
+            //3. Handle SDL2 events and Rendering
+            SDL.SDL_RenderPresent(_renderer);
+            SDL.SDL_RenderClear(_renderer);
+            SDL.SDL_Delay(16);
+        }
+
+        SDL.SDL_DestroyRenderer(_renderer);
+        SDL.SDL_DestroyWindow(_window);
+        SDL.SDL_Quit();
+    }
+
+    private static void HandleEventsAndPrepareFrame()
+        {
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
             {
                 if (e.type == SDL.SDL_EventType.SDL_QUIT)
@@ -63,26 +66,48 @@ static class Program
             {
                 for (int x = 0; x < DISPLAY_WIDTH; x++)
                 {
-                    if (CPU.display.getPixel(x, y))
-                        SDL.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White for pixels that are on
+                    if (_cpu.display.getPixel(x, y))
+                        SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255); // White for pixels that are on
                     else
-                        SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black for pixels that are off
-                    rect.x = x * scaleX;
-                    rect.y = y * scaleY;
-                    SDL.SDL_RenderFillRect(renderer, ref rect);
+                        SDL.SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // Black for pixels that are off
+                    _rect.x = x * _scaleX;
+                    _rect.y = y * _scaleY;
+                    SDL.SDL_RenderFillRect(_renderer, ref _rect);
                 }
             }
-
-            //3. Handle SDL2 events and Rendering
-            SDL.SDL_RenderPresent(renderer);
-            SDL.SDL_RenderClear(renderer);
-            SDL.SDL_Delay(16);
         }
 
-        SDL.SDL_DestroyRenderer(renderer);
-        SDL.SDL_DestroyWindow(window);
-        SDL.SDL_Quit();
+    private static void SDL2Startup()
+    {
+        SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
+
+        _window = SDL.SDL_CreateWindow(WINDOW_NAME, SDL_DRAW_START_X, SDL_DRAW_START_Y, SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, SDL_WINDOW_TYPE);
+        _renderer = SDL.SDL_CreateRenderer(_window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+        SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
+        SDL.SDL_RenderDrawPoint(_renderer, 0, 0);
+
+        _scaleX = SDL_WINDOW_WIDTH / DISPLAY_WIDTH;
+        _scaleY = SDL_WINDOW_HEIGHT / DISPLAY_HEIGHT;
+        _rect = new SDL.SDL_Rect
+        {
+            x = 0,
+            y = 0,
+            w = _scaleX,
+            h = _scaleY
+        };
     }
 
+    private static void HandleTimerLogic()
+    {
+        if (_cpu.delayTimer > 0)
+        {
+            _cpu.delayTimer--;
+        }
 
+        if (_cpu.soundTimer > 0)
+        {
+            //Beep as long as above 0
+            _cpu.soundTimer--;
+        }
+    }
 }

@@ -3,7 +3,7 @@ using static CHIP_8.Constants;
 
 namespace CHIP_8
 {
-    internal class CPU
+    internal class Cpu
     {
         internal Display display = new Display();
         internal ushort[] stack = new ushort[16];
@@ -12,6 +12,9 @@ namespace CHIP_8
         internal ushort PC = 0x200;
         internal byte SP = 0; //stack pointer
         internal ushort I;
+        internal byte delayTimer = 0;
+        internal byte soundTimer = 0;
+
         internal readonly Random rand = new Random();
 
 
