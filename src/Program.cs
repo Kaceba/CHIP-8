@@ -35,18 +35,9 @@ static class Program
             {
                 if (_cpu.PC < PROGRAM_START || _cpu.PC >= MEMORY_SIZE - 1) break;
 
-<<<<<<< HEAD
                 //1. Emulator cycle goes here (fetch, decode, execute)
                 ushort FetchedInstruction = _cpu.FetchInstruction();
                 _cpu.DecodeExecute(FetchedInstruction);
-=======
-                //1. Emulator cycle would go here (fetch, decode, execute)
-                ushort FetchedInstruction = CPU.FetchInstruction();
-
-                Console.WriteLine($"Fetched Instruction: {FetchedInstruction:X4} at PC: {CPU.PC - 2:X4}");
-
-                CPU.DecodeExecute(FetchedInstruction);
->>>>>>> b12faaa (console logger)
             }
 
             //2. Translate emulator information to SDL2 for rendering
