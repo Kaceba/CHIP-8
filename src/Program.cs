@@ -38,6 +38,8 @@ static class Program
                 //1. Emulator cycle goes here (fetch, decode, execute)
                 ushort FetchedInstruction = _cpu.FetchInstruction();
                 _cpu.DecodeExecute(FetchedInstruction);
+
+                Console.WriteLine("Executed Instruction: 0x" + FetchedInstruction.ToString("X4"));
             }
 
             //2. Translate emulator information to SDL2 for rendering
