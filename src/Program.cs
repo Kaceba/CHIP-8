@@ -11,7 +11,7 @@ internal static class Program
     private static int _scaleX;
     private static int _scaleY;
     private static SDL.SDL_Rect _rect;
-    private static Cpu _cpu = new Cpu();
+    private static readonly Cpu Cpu = new Cpu();
 
     private static void Main()
     {
@@ -19,13 +19,13 @@ internal static class Program
         //Font set loading
         for (int i = 0; i < FONTSET.Length; i++)
         {
-            _cpu.Memory[FONTSET_START + i] = FONTSET[i];
+            Cpu.Memory[FONTSET_START + i] = FONTSET[i];
         }
 
         //~SDL2 startup
         Sdl2Startup();
 
-        _cpu.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
+        Cpu.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
 
         while (_isRunning)
         {
@@ -35,11 +35,11 @@ internal static class Program
             {
                 //I dont like this, the PC is supposed to be a private field on the CPU, not accessible by the general program itself
                 //TODO: Move this cycle into a method inside the CPU, out of the program
-                if (_cpu.PC < PROGRAM_START || _cpu.PC >= MEMORY_SIZE - 1) break;
+                if (Cpu.Pc < PROGRAM_START || Cpu.Pc >= MEMORY_SIZE - 1) break;
 
                 //1. Emulator cycle goes here (fetch, decode, execute)
-                ushort fetchedInstruction = _cpu.FetchInstruction();
-                _cpu.DecodeExecute(fetchedInstruction);
+                ushort fetchedInstruction = Cpu.FetchInstruction();
+                Cpu.DecodeExecute(fetchedInstruction);
 
                 Console.WriteLine("Executed Instruction: 0x" + fetchedInstruction.ToString("X4"));
             }
@@ -49,10 +49,10 @@ internal static class Program
 
             //3. Handle SDL2 events and Rendering
             
-            //sdl render clear can return an error
-            //TODO: Introduce a proper logger
-            int something =  SDL.SDL_RenderClear(_renderer);
             SDL.SDL_RenderPresent(_renderer);
+            
+            //todo: implement a good error handler
+            int something =  SDL.SDL_RenderClear(_renderer);
             SDL.SDL_Delay(16);
         }
 
@@ -73,7 +73,7 @@ internal static class Program
             {
                 for (int x = 0; x < DISPLAY_WIDTH; x++)
                 {
-                    if (_cpu.Display.GetPixel(x, y))
+                    if (Cpu.Display.GetPixel(x, y))
                         SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255); // White for pixels that are on
                     else
                         SDL.SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // Black for pixels that are off
@@ -106,15 +106,15 @@ internal static class Program
 
     private static void HandleTimerLogic()
     {
-        if (_cpu.DelayTimer > 0)
+        if (Cpu.DelayTimer > 0)
         {
-            _cpu.DelayTimer--;
+            Cpu.DelayTimer--;
         }
 
-        if (_cpu.SoundTimer > 0)
+        if (Cpu.SoundTimer > 0)
         {
             //Beep as long as above 0
-            _cpu.SoundTimer--;
+            Cpu.SoundTimer--;
         }
     }
 }
