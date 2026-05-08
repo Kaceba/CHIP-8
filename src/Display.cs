@@ -7,12 +7,12 @@ namespace CHIP_8
     {
         internal bool[] display = new bool[64 * 32];
 
-        internal bool getPixel(int x, int y)
+        internal bool GetPixel(int x, int y)
         {
             return display[y * 64 + x];
         }
 
-        internal bool setPixel(int x, int y, bool value)
+        private bool SetPixel(int x, int y, bool value)
         {
             return display[y * 64 + x] = value;
         }
@@ -32,14 +32,14 @@ namespace CHIP_8
                         int x = (startX + col) % DISPLAY_WIDTH;
                         int y = (startY + row) % DISPLAY_HEIGHT;
 
-                        bool oldPixel = getPixel(x, y);
+                        bool oldPixel = GetPixel(x, y);
                         if (oldPixel)
                         {
                             // If the pixel was already set, we have a collision
                             collision = true; // Indicate a collision
                         }
 
-                        setPixel(x, y, oldPixel ^ true); // XOR the pixel
+                        SetPixel(x, y, oldPixel ^ true); // XOR the pixel
                     }
                 }
             }

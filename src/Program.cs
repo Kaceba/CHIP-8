@@ -3,9 +3,9 @@ using static CHIP_8.Constants;
 
 namespace CHIP_8;
 
-static class Program
+internal static class Program
 {
-    private static bool isRunning = true;
+    private static bool _isRunning = true;
     private static nint _window;
     private static nint _renderer;
     private static int _scaleX;
@@ -13,41 +13,46 @@ static class Program
     private static SDL.SDL_Rect _rect;
     private static Cpu _cpu = new Cpu();
 
-    static void Main(string[] args)
+    private static void Main()
     {
 
-        //Fontset loading
+        //Font set loading
         for (int i = 0; i < FONTSET.Length; i++)
         {
-            _cpu.memory[FONTSET_START + i] = FONTSET[i];
+            _cpu.Memory[FONTSET_START + i] = FONTSET[i];
         }
 
         //~SDL2 startup
-        SDL2Startup();
+        Sdl2Startup();
 
         _cpu.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
 
-        while (isRunning)
+        while (_isRunning)
         {
             HandleTimerLogic();
 
             for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
             {
+                //I dont like this, the PC is supposed to be a private field on the CPU, not accessible by the general program itself
+                //TODO: Move this cycle into a method inside the CPU, out of the program
                 if (_cpu.PC < PROGRAM_START || _cpu.PC >= MEMORY_SIZE - 1) break;
 
                 //1. Emulator cycle goes here (fetch, decode, execute)
-                ushort FetchedInstruction = _cpu.FetchInstruction();
-                _cpu.DecodeExecute(FetchedInstruction);
+                ushort fetchedInstruction = _cpu.FetchInstruction();
+                _cpu.DecodeExecute(fetchedInstruction);
 
-                Console.WriteLine("Executed Instruction: 0x" + FetchedInstruction.ToString("X4"));
+                Console.WriteLine("Executed Instruction: 0x" + fetchedInstruction.ToString("X4"));
             }
 
             //2. Translate emulator information to SDL2 for rendering
             HandleEventsAndPrepareFrame();
 
             //3. Handle SDL2 events and Rendering
+            
+            //sdl render clear can return an error
+            //TODO: Introduce a proper logger
+            int something =  SDL.SDL_RenderClear(_renderer);
             SDL.SDL_RenderPresent(_renderer);
-            SDL.SDL_RenderClear(_renderer);
             SDL.SDL_Delay(16);
         }
 
@@ -61,14 +66,14 @@ static class Program
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
             {
                 if (e.type == SDL.SDL_EventType.SDL_QUIT)
-                    isRunning = false;
+                    _isRunning = false;
             }
 
             for (int y = 0; y < DISPLAY_HEIGHT; y++)
             {
                 for (int x = 0; x < DISPLAY_WIDTH; x++)
                 {
-                    if (_cpu.display.getPixel(x, y))
+                    if (_cpu.Display.GetPixel(x, y))
                         SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255); // White for pixels that are on
                     else
                         SDL.SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // Black for pixels that are off
@@ -79,7 +84,7 @@ static class Program
             }
         }
 
-    private static void SDL2Startup()
+    private static void Sdl2Startup()
     {
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
@@ -101,15 +106,15 @@ static class Program
 
     private static void HandleTimerLogic()
     {
-        if (_cpu.delayTimer > 0)
+        if (_cpu.DelayTimer > 0)
         {
-            _cpu.delayTimer--;
+            _cpu.DelayTimer--;
         }
 
-        if (_cpu.soundTimer > 0)
+        if (_cpu.SoundTimer > 0)
         {
             //Beep as long as above 0
-            _cpu.soundTimer--;
+            _cpu.SoundTimer--;
         }
     }
 }

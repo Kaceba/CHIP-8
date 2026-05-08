@@ -1,29 +1,28 @@
-﻿using System.Globalization;
-using static CHIP_8.Constants;
+﻿using static CHIP_8.Constants;
 
 namespace CHIP_8
 {
     internal class Cpu
     {
-        internal Display display = new Display();
-        internal ushort[] stack = new ushort[16];
-        internal byte[] memory = new byte[MEMORY_SIZE]; //4KB memory
-        internal byte[] registers = new byte[16];
-        internal bool[] keys = new bool[16];
-        internal ushort PC = 0x200;
-        internal byte SP = 0; //stack pointer
-        internal ushort I;
-        internal byte delayTimer = 0;
-        internal byte soundTimer = 0;
+        internal Display Display = new Display();
+        internal byte[] Memory = new byte[MEMORY_SIZE]; //4KB memory
+        internal bool[] Keys = new bool[16];
+        internal ushort PC = 0x200; //program counter
+        internal byte DelayTimer = 0;
+        internal byte SoundTimer = 0;
 
-        internal readonly Random rand = new Random();
+        private ushort[] Stack = new ushort[16];
+        private byte[] Registers = new byte[16];
+        private byte SP = 0; //stack pointer
+        private ushort I;
+        private readonly Random rand = new Random();
 
 
         internal ushort FetchInstruction()
         {
             //fetch 2 bytes from memory at the current PC location, combine them into a single instruction,
             //and increment the PC by 2, 8bit big-endian shifting
-            ushort instruction = (ushort)((memory[PC] << 8) | memory[PC + 1]);
+            ushort instruction = (ushort)((Memory[PC] << 8) | Memory[PC + 1]);
             PC += 2;
             return instruction;
         }
@@ -51,15 +50,15 @@ namespace CHIP_8
                     switch (nn)
                     {
                         case 0xE0: //00E0: Clear the display
-                            for (int i = 0; i < display.display.Length; i++)
+                            for (int i = 0; i < Display.display.Length; i++)
                             {
-                                display.display[i] = false;
+                                Display.display[i] = false;
                             }
                             break;
                         case 0xEE: //00EE: Return from subroutine
                             //set PC to the address at the top of the stack, then decrement the stack pointer
                             SP--;
-                            PC = stack[SP];
+                            PC = Stack[SP];
                             break;
                         default:
                             //0NNN: Calls RCA 1802 program at address NNN. Not necessary for most ROMs.
@@ -72,86 +71,86 @@ namespace CHIP_8
                     break;
                 case 0x2:
                     //2NNN: Call subroutine at NNN
-                    stack[SP] = PC;
+                    Stack[SP] = PC;
                     SP++;
                     PC = nnn;
                     break;
                 case 0x3:
-                    if(registers[x] == nn)
+                    if(Registers[x] == nn)
                         PC += 2; //skip next instruction if VX == NN
                     break;
                 case 0x4:
-                    if(registers[x] != nn)
+                    if(Registers[x] != nn)
                         PC += 2; //skip next instruction if VX != NN
                     break;
                 case 0x5:
-                    if (registers[x] == registers[y])
+                    if (Registers[x] == Registers[y])
                         PC += 2; //skip next instruction if VX == VY   
                     break;
                 case 0x6:
-                    registers[x] = nn; //6XNN: Set VX to NN
+                    Registers[x] = nn; //6XNN: Set VX to NN
                     break;
                 case 0x7:
-                    registers[x] += nn; //7XNN: Add NN to VX
+                    Registers[x] += nn; //7XNN: Add NN to VX
                     break;
                 case 0x8:
                     switch (n)
                     {
                         case 0x0:
-                            registers[x] = registers[y]; //mem copy of value
+                            Registers[x] = Registers[y]; //mem copy of value
                             break;
                         case 0x1:
-                            registers[x] |= registers[y]; //OR
+                            Registers[x] |= Registers[y]; //OR
                             break;
                         case 0x2:
-                            registers[x] &= registers[y]; //AND
+                            Registers[x] &= Registers[y]; //AND
                             break;
                         case 0x3:
-                            registers[x] ^= registers[y]; //XOR
+                            Registers[x] ^= Registers[y]; //XOR
                             break;
                         case 0x4:
-                            int sum = registers[x] + registers[y]; //sum with carry
-                            registers[0xF] = (byte)(sum > 255 ? 1 : 0);
-                            registers[x] = (byte)(sum);
+                            int sum = Registers[x] + Registers[y]; //sum with carry
+                            Registers[0xF] = (byte)(sum > 255 ? 1 : 0);
+                            Registers[x] = (byte)(sum);
                             break;
                         case 0x5:
-                            registers[0xF] = (byte)(registers[x] >= registers[y] ? 1 : 0); //sub with borrow
-                            registers[x] = (byte)(registers[x] - registers[y]);
+                            Registers[0xF] = (byte)(Registers[x] >= Registers[y] ? 1 : 0); //sub with borrow
+                            Registers[x] = (byte)(Registers[x] - Registers[y]);
                             break;
                         case 0x6:
-                            registers[0xF] = (byte)(registers[x] & 0x1);
-                            registers[x] >>= 1; //shift right
+                            Registers[0xF] = (byte)(Registers[x] & 0x1);
+                            Registers[x] >>= 1; //shift right
                             break;
                         case 0x7:
-                            registers[0xF] = (byte)(registers[y] >= registers[x] ? 1 : 0); //reverse sub with borrow (reverse means swap the operands)
-                            registers[x] = (byte)(registers[y] - registers[x]);
+                            Registers[0xF] = (byte)(Registers[y] >= Registers[x] ? 1 : 0); //reverse sub with borrow (reverse means swap the operands)
+                            Registers[x] = (byte)(Registers[y] - Registers[x]);
                             break;
                         case 0xE:
-                            registers[0xF] = (byte)((registers[x] & 0x80) >> 7); //we shift the MSB to LSB position because 8 bits and 7 positions
-                            registers[x] <<= 1; //shift left
+                            Registers[0xF] = (byte)((Registers[x] & 0x80) >> 7); //we shift the MSB to LSB position because 8 bits and 7 positions
+                            Registers[x] <<= 1; //shift left
                             break;
                     }
                     break;
                 case 0x9:
-                    if(registers[x] != registers[y])
+                    if(Registers[x] != Registers[y])
                         PC += 2; //skip next instruction if VX != VY
                     break;
                 case 0xA:
                     I = nnn; //ANNN: Set I to the address NNN
                     break;
                 case 0xB:
-                    PC = (ushort)(nnn + registers[0]); //BNNN: Jump to address NNN + V0
+                    PC = (ushort)(nnn + Registers[0]); //BNNN: Jump to address NNN + V0
                     break;
                 case 0xC:
                     byte randomByte = (byte)rand.Next(0, 256); //generate random byte
-                    registers[x] = (byte)(randomByte & nn); //CXNN: Set VX to result of random byte AND NN
+                    Registers[x] = (byte)(randomByte & nn); //CXNN: Set VX to result of random byte AND NN
                     break;
                 case 0xD:
-                    registers[0xF] = 0; //reset VF
-                    bool collision = display.DrawSprite(memory, I, registers[x], registers[y], n);
+                    Registers[0xF] = 0; //reset VF
+                    bool collision = Display.DrawSprite(Memory, I, Registers[x], Registers[y], n);
                     if (collision)
                     {
-                        registers[0xF] = 1; //set VF to 1 if there was a collision
+                        Registers[0xF] = 1; //set VF to 1 if there was a collision
                     }
                     break;
                 case 0xE:
@@ -160,26 +159,26 @@ namespace CHIP_8
                 case 0xF:
                 if (nn == 0x1E)
                     {
-                        I += registers[x]; //FX1E: Add VX to I
+                        I += Registers[x]; //FX1E: Add VX to I
                     }
                     else if (nn == 0x29)
                     {
-                        I = (ushort)(FONTSET_START + (registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
+                        I = (ushort)(FONTSET_START + (Registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
                     }
                     else if (nn == 0x33)
                     {
                         //FX33: Store BCD representation of VX in memory locations I, I+1, and I+2
-                        byte value = registers[x];
-                        memory[I] = (byte)(value / 100); //hundreds
-                        memory[I + 1] = (byte)((value / 10) % 10); //tens
-                        memory[I + 2] = (byte)(value % 10); //ones
+                        byte value = Registers[x];
+                        Memory[I] = (byte)(value / 100); //hundreds
+                        Memory[I + 1] = (byte)((value / 10) % 10); //tens
+                        Memory[I + 2] = (byte)(value % 10); //ones
                     }
                     else if (nn == 0x55)
                     {
                         //FX55: Store registers V0 through VX in memory starting at location I
                         for (int i = 0; i <= x; i++)
                         {
-                            memory[I + i] = registers[i];
+                            Memory[I + i] = Registers[i];
                         }
                     }
                     else if (nn == 0x65)
@@ -187,20 +186,20 @@ namespace CHIP_8
                         //FX65: Read registers V0 through VX from memory starting at location I
                         for (int i = 0; i <= x; i++)
                         {
-                            registers[i] = memory[I + i];
+                            Registers[i] = Memory[I + i];
                         }
                     }
                     else if (nn == 0x07)
                     {
-                        registers[x] = delayTimer; //FX07: Set VX to the value of the delay timer
+                        Registers[x] = DelayTimer; //FX07: Set VX to the value of the delay timer
                     }
                     else if (nn == 0x15)
                     {
-                        delayTimer = registers[x]; //FX15: Set the delay timer to VX
+                        DelayTimer = Registers[x]; //FX15: Set the delay timer to VX
                     }
                     else if (nn == 0x18)
                     {
-                        soundTimer = registers[x]; //FX18: Set the sound timer to VX
+                        SoundTimer = Registers[x]; //FX18: Set the sound timer to VX
                     }
                     else if (nn == 0x0A)
                     {
@@ -215,7 +214,7 @@ namespace CHIP_8
         internal void LoadProgram(byte[] program)
         {
             //load program into memory starting at 0x200
-            Array.Copy(program, 0, memory, PROGRAM_START, program.Length);
+            Array.Copy(program, 0, Memory, PROGRAM_START, program.Length);
         }
 
 
