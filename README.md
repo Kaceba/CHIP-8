@@ -2,6 +2,10 @@
 
 A CHIP-8 interpreter written in C# / .NET 10, using SDL2 (`ppy.SDL2-CS`) for rendering.
 
+<img width="661" height="663" alt="image" src="https://github.com/user-attachments/assets/0485dfa2-ea78-46b9-9d9a-0b9850fc5b3f" />
+
+<img width="901" height="778" alt="image" src="https://github.com/user-attachments/assets/18b1eebc-e5a5-423d-82f7-bdb45e2d9a34" />
+
 ## Status
 
 Early / in progress. Core fetch-decode-execute loop, display (XOR-drawing with collision flag), and most opcodes are implemented. Input, sound, and a few opcodes are still missing — see `TODO.md` for the current punch list.
