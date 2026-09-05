@@ -202,7 +202,6 @@ namespace CHIP_8
                         SoundTimer = _registers[x]; //FX18: Set the sound timer to VX
                         break;
                     case 0x0A:
-                        //Still missing FX0A needs input first
                         //FX0A: Wait for a key press, store the value of the key in VX
                         //Not implemented yet, needs input handling
                         break;
