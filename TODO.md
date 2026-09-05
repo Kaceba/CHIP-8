@@ -1,4 +1,4 @@
-# CHIP-8 TODO
+# CHIP-8 TODO - AI generated, there are probably hallucinations here
 
 ## Bugs / correctness
 
