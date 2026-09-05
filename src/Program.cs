@@ -34,7 +34,7 @@ internal static class Program
             for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
             {
                 //I dont like this, the PC is supposed to be a private field on the CPU, not accessible by the general program itself
-                //TODO: Move this cycle into a method inside the CPU, out of the program
+                //TODO: Move this cycle into a method inside the CPU, out of the program.cs file
                 if (Cpu.Pc < PROGRAM_START || Cpu.Pc >= MEMORY_SIZE - 1) break;
 
                 //1. Emulator cycle goes here (fetch, decode, execute)
