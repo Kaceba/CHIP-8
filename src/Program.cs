@@ -29,7 +29,7 @@ internal static class Program
         //Load ROM into memory and check if it fits
         byte[] rom = File.ReadAllBytes(Path.Combine("..", "roms", "1-chip8-logo.ch8"));
 
-        if (rom.Length >= MEMORY_SIZE - PROGRAM_START)
+        if (rom.Length > MEMORY_SIZE - PROGRAM_START)
         {
             //TODO: ConsoleWriteline is not great, a popup message box would be better
             Console.WriteLine("Error: ROM is too large to fit in memory.");
