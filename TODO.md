@@ -5,11 +5,40 @@ Line numbers are approximate and will drift.
 
 Legend: ✅ done · 🟡 partly done / has a bug · ❌ missing · ➖ optional
 
+## Progress
+
+**50% complete** (40 of 80 items) `██████████░░░░░░░░░░`
+Counting only fully finished items: **35%** (28 of 80).
+
+Last counted 2026-10-11.
+
+| Section | Points | Items |
+|---|---|---|
+| Memory | 4 | 5 |
+| Font | 1 | 1 |
+| Display | 2.5 | 4 |
+| Stack | 1.5 | 2 |
+| Timers | 1.5 | 3 |
+| Keypad | 0 | 1 |
+| Fetch / decode / execute loop | 3 | 5 |
+| Instruction set (34 opcodes) | 24.5 | 34 |
+| Quirks / configuration | 0 | 1 |
+| UI | 0 | 7 |
+| Debugging tools | 0 | 3 |
+| Testing | 2 | 5 |
+| Code quality | 0 | 9 |
+| **Total** | **40** | **80** |
+
+How it's counted:
+- Each required task or finished milestone in a section is one item, and each opcode is one item. `0NNN` (intentionally skipped) and everything marked ➖ optional or under Extensions are left out.
+- ✅ or `[x]` is 1 point, 🟡 is 0.5, ❌ is 0.
+- When something changes, update its status, then adjust that section's points and the totals above.
+
 ## Overview
 
 | Feature | Status | What's left |
 |---|---|---|
-| Memory | 🟡 | 12-bit address masking, ROM size check off-by-one |
+| Memory | 🟡 | 12-bit address masking, hardcoded ROM path |
 | Font | ✅ | nothing |
 | Display | 🟡 | sprite clipping, window scaling |
 | Stack | 🟡 | overflow/underflow guards |
@@ -27,7 +56,7 @@ Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter
 
 - ✅ 4096-byte array, programs load at `0x200` (`src/CPU.cs`, `src/Constants.cs`)
 - [ ] 🟡 **Mask `I` to 12 bits.** `FX1E` can push `_index` past 4095 (`src/CPU.cs:160`), so `DXYN`, `FX33`, `FX55` and `FX65` throw `IndexOutOfRangeException`.
-- [ ] 🟡 **Fix the ROM size check off-by-one** (`src/Program.cs:32`). The check now lives in `Program.cs` and cleans up through `Sdl2Killer()`, but `rom.Length >= MEMORY_SIZE - PROGRAM_START` rejects a ROM of exactly 3584 bytes, which fits. Use `>`. `LoadProgram` itself (`src/CPU.cs:216`) still has no guard of its own.
+- [x] ✅ **ROM size check** (`src/Program.cs:32`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:216`) has no guard of its own.
 - [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:30`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
 - ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:118`), used on normal exit and on the ROM-too-large path.
 
@@ -87,7 +116,7 @@ Spec: fetch two bytes at PC, advance PC by 2, decode on the first nibble after e
 - [ ] 🟡 **Speed is hardcoded at 10 instructions per frame (about 600/s)** (`src/Program.cs:47`). Make it configurable, with a default near 700/s.
 - [ ] 🟡 **Unknown opcodes are silently ignored**, including inside the `0x0` and `8XY?` sub-switches (`src/CPU.cs`). The guide recommends raising an error.
 - [ ] 🟡 **PC bounds check lives in the frame loop** and silently `break`s (`src/Program.cs:51`). Move it into `Cpu` and halt with a message.
-- [ ] 🟡 **`Console.WriteLine` per instruction** (`src/Program.cs:44`) floods the terminal (`src/Program.cs:57`). Gate it behind a debug flag.
+- [ ] 🟡 **`Console.WriteLine` per instruction** (`src/Program.cs:57`) floods the terminal. Gate it behind a debug flag.
 
 ## Instruction set
 
