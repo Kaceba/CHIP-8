@@ -69,6 +69,7 @@ internal static class Program
             SDL.SDL_Delay(16);
         }
 
+        //Cleanup SDL2 resources
         Sdl2Killer();
     }
 
