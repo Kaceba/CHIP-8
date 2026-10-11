@@ -23,9 +23,22 @@ internal static class Program
         }
 
         //~SDL2 startup
-        Sdl2Startup();
+        Sdl2Starter();
 
-        Cpu.LoadProgram(File.ReadAllBytes(Path.Combine("..", "roms", "IBM Logo.ch8")));
+
+        //Load ROM into memory and check if it fits
+        byte[] rom = File.ReadAllBytes(Path.Combine("..", "roms", "1-chip8-logo.ch8"));
+
+        if (rom.Length >= MEMORY_SIZE - PROGRAM_START)
+        {
+            //TODO: ConsoleWriteline is not great, a popup message box would be better
+            Console.WriteLine("Error: ROM is too large to fit in memory.");
+            Sdl2Killer();
+
+            return;
+        }
+
+        Cpu.LoadProgram(rom);
 
         while (_isRunning)
         {
@@ -56,9 +69,7 @@ internal static class Program
             SDL.SDL_Delay(16);
         }
 
-        SDL.SDL_DestroyRenderer(_renderer);
-        SDL.SDL_DestroyWindow(_window);
-        SDL.SDL_Quit();
+        Sdl2Killer();
     }
 
     private static void HandleEventsAndPrepareFrame()
@@ -84,7 +95,7 @@ internal static class Program
             }
         }
 
-    private static void Sdl2Startup()
+    private static void Sdl2Starter()
     {
         SDL.SDL_Init(SDL.SDL_INIT_VIDEO);
 
@@ -102,6 +113,13 @@ internal static class Program
             w = _scaleX,
             h = _scaleY
         };
+    }
+
+    private static void Sdl2Killer()
+    {
+        SDL.SDL_DestroyRenderer(_renderer);
+        SDL.SDL_DestroyWindow(_window);
+        SDL.SDL_Quit();
     }
 
     private static void HandleTimerLogic()
