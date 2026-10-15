@@ -18,7 +18,7 @@ namespace CHIP_8
         private readonly Random _rand = new Random();
 
 
-        internal ushort FetchInstruction()
+        protected internal ushort FetchInstruction()
         {
             //fetch 2 bytes from memory at the current PC location, combine them into a single instruction,
             //and increment the PC by 2, 8bit big-endian shifting
@@ -27,7 +27,7 @@ namespace CHIP_8
             return instruction;
         }
 
-        internal void DecodeExecute(ushort instruction)
+        protected internal void DecodeExecute(ushort instruction)
         {
             //We are trying to get the instruction and decode it to then show it on the display
             //get all nibbles first and NN / NNN values
@@ -152,7 +152,6 @@ namespace CHIP_8
                     }
                     break;
                 case 0xE:
-                    //Still missing EX9E, EXA1 needs input first
                     switch(nn)
                     {
                         case 0x9E:
@@ -226,15 +225,23 @@ namespace CHIP_8
             throw new NotImplementedException();
         }
 
-        internal void LoadProgram(byte[] program)
+        protected internal void LoadProgram(byte[] program)
         {
             //load program into memory starting at 0x200
             Array.Copy(program, 0, Memory, PROGRAM_START, program.Length);
         }
 
-        internal bool PCOutOfBounds()
+        protected internal bool PCOutOfBounds()
         {
             return Pc < PROGRAM_START || Pc >= MEMORY_SIZE - 1;
+        }
+
+        protected internal void LoadFontset()
+        {
+            for (int i = 0; i < FONTSET.Length; i++)
+            {
+                Memory[FONTSET_START + i] = FONTSET[i];
+            }
         }
     }
 }

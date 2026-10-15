@@ -1,5 +1,4 @@
 using SDL2;
-using System.Runtime.CompilerServices;
 using static CHIP_8.Constants;
 
 namespace CHIP_8;
@@ -18,14 +17,10 @@ internal static class Program
     {
 
         //Font set loading
-        for (int i = 0; i < FONTSET.Length; i++)
-        {
-            Cpu.Memory[FONTSET_START + i] = FONTSET[i];
-        }
+        Cpu.LoadFontset();
 
         //~SDL2 startup
         Sdl2Starter();
-
 
         //Load ROM into memory and check if it fits
         byte[] rom = File.ReadAllBytes(Path.Combine("..", "roms", "1-chip8-logo.ch8"));
@@ -46,7 +41,6 @@ internal static class Program
 
             //2. Translate emulator information to SDL2 for rendering
             HandleSDLEvents();
-            PrepareFrame();
             HandleTimerLogic();
             ReadInput();
 
@@ -62,11 +56,11 @@ internal static class Program
             }
 
             //3. Present frame
-            
+            PrepareFrame();
             SDL.SDL_RenderPresent(_renderer);
-            
+
             //todo: implement a good error handler
-            int something =  SDL.SDL_RenderClear(_renderer);
+            int something = SDL.SDL_RenderClear(_renderer);
             SDL.SDL_Delay(16);
         }
 
@@ -93,18 +87,18 @@ internal static class Program
 
     private static void ReadInput()
     {
-        //Cpu.Keys[0] = SDL.SDL_GetKeyboardState(out int numKeys)[SDL.SDL_SCANCODE_1] == 1;
+        Cpu.Keys[0] = SDL.SDL_GetKeyboardState(out int numKeys)[SDL.SDL_SCANCODE_1] == 1;
         return;
     }
 
     private static void HandleSDLEvents()
+    {
+        while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
         {
-            while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
-            {
-                if (e.type == SDL.SDL_EventType.SDL_QUIT)
-                    _isRunning = false;
-            }
+            if (e.type == SDL.SDL_EventType.SDL_QUIT)
+                _isRunning = false;
         }
+    }
 
     private static void Sdl2Starter()
     {
