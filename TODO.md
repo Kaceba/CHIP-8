@@ -7,27 +7,27 @@ Legend: ✅ done · 🟡 partly done / has a bug · ❌ missing · ➖ optional
 
 ## Progress
 
-**50% complete** (40 of 80 items) `██████████░░░░░░░░░░`
-Counting only fully finished items: **35%** (28 of 80).
+**51% complete** (40 of 79 items) `██████████░░░░░░░░░░`
+Counting only fully finished items: **37%** (29 of 79).
 
 Last counted 2026-10-15.
 
 | Section | Points | Items |
 |---|---|---|
-| Memory | 4 | 5 |
+| Memory | 3.5 | 4 |
 | Font | 1 | 1 |
 | Display | 2.5 | 4 |
 | Stack | 1.5 | 2 |
 | Timers | 1.5 | 3 |
 | Keypad | 0 | 1 |
 | Fetch / decode / execute loop | 3 | 5 |
-| Instruction set (34 opcodes) | 24.5 | 34 |
+| Instruction set (34 opcodes) | 25 | 34 |
 | Quirks / configuration | 0 | 1 |
 | UI | 0 | 7 |
 | Debugging tools | 0 | 3 |
 | Testing | 2 | 5 |
 | Code quality | 0 | 9 |
-| **Total** | **40** | **80** |
+| **Total** | **40** | **79** |
 
 How it's counted:
 - Each required task or finished milestone in a section is one item, and each opcode is one item. `0NNN` (intentionally skipped) and everything marked ➖ optional or under Extensions are left out.
@@ -38,7 +38,7 @@ How it's counted:
 
 | Feature | Status | What's left |
 |---|---|---|
-| Memory | 🟡 | 12-bit address masking, hardcoded ROM path |
+| Memory | 🟡 | hardcoded ROM path |
 | Font | ✅ | nothing |
 | Display | 🟡 | sprite clipping, window scaling |
 | Stack | 🟡 | overflow/underflow guards |
@@ -55,7 +55,7 @@ How it's counted:
 Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter and font; programs load at `0x200`.
 
 - ✅ 4096-byte array, programs load at `0x200` (`src/CPU.cs`, `src/Constants.cs`)
-- [ ] 🟡 **Mask `I` to 12 bits.** The `FX1E` mask was added (`src/CPU.cs:161`) but it is wrong: it uses `+=` on the already-summed value, so `I` becomes `I + ((I + VX) & 0xFFF)`, roughly double what it should be (e.g. `I = 0x300`, `VX = 1` gives `0x601`). It should be `_index = (ushort)((_index + _registers[x]) & 0xFFF);`. Also still open: `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:170-172`, `:180`, `:190`), which can run past `0xFFF` when `I` is valid but near the end. Wrap each access with `& 0xFFF` or throw.
+- ➖ **Keep `I + offset` inside memory (optional).** `FX1E` now wraps `I` correctly (`src/CPU.cs:161`). `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:170-172`, `:180`, `:190`), which can only run past `0xFFF` if a ROM points `I` very close to the end of memory. Unlikely in real ROMs; if it ever matters, wrap each access with `& 0xFFF` or throw (the `Chip8Exception` popup covers it).
 - [x] ✅ **ROM size check** (`src/Program.cs:32`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:216`) has no guard of its own.
 - [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:30`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
 - ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:119`), used on normal exit and on the ROM-too-large path.
@@ -172,7 +172,7 @@ The VF ordering bug (`src/CPU.cs:109-129`): the flag is written first and the re
 | `FX07` | VX = delay timer | ✅ |
 | `FX15` | delay timer = VX | ✅ |
 | `FX18` | sound timer = VX | ✅ |
-| `FX1E` | I += VX | 🟡 mask added but uses `+=` (wrong result, see Memory); no VF overflow quirk |
+| `FX1E` | I += VX | ✅ wraps `I` to 12 bits (the optional VF overflow flag is tracked under Quirks) |
 | `FX29` | I = font address for VX | 🟡 should use `VX & 0xF`; replace the `* 5` with `FONT_HEIGHT` |
 | `FX33` | BCD | ✅ (needs the `I` bounds fix) |
 | `FX55` | store V0..VX | 🟡 modern behavior only, undocumented; no quirk |

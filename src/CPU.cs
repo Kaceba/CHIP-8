@@ -153,6 +153,17 @@ namespace CHIP_8
                     break;
                 case 0xE:
                     //Still missing EX9E, EXA1 needs input first
+                    switch(nn)
+                    {
+                        case 0x9E:
+                            if (Keys[_registers[x]])
+                                Pc += 2; //skip next instruction if key with the value of VX is pressed
+                            break;
+                        case 0xA1:
+                            if (!Keys[_registers[x]])
+                                Pc += 2; //skip next instruction if key with the value of VX is not pressed
+                            break;
+                    }
                     break;
                 case 0xF:
                 switch (nn)
@@ -203,11 +214,16 @@ namespace CHIP_8
                         break;
                     case 0x0A:
                         //FX0A: Wait for a key press, store the value of the key in VX
-                        //Not implemented yet, needs input handling
-                        break;
+                        _registers[x] = WaitForKeyPress();
+                            break;
                 }
                 break;
             }
+        }
+
+        private byte WaitForKeyPress()
+        {
+            throw new NotImplementedException();
         }
 
         internal void LoadProgram(byte[] program)
@@ -216,7 +232,10 @@ namespace CHIP_8
             Array.Copy(program, 0, Memory, PROGRAM_START, program.Length);
         }
 
-
+        internal bool PCOutOfBounds()
+        {
+            return Pc < PROGRAM_START || Pc >= MEMORY_SIZE - 1;
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 using SDL2;
+using System.Runtime.CompilerServices;
 using static CHIP_8.Constants;
 
 namespace CHIP_8;
@@ -42,13 +43,16 @@ internal static class Program
 
         while (_isRunning)
         {
+
+            //2. Translate emulator information to SDL2 for rendering
+            HandleSDLEvents();
+            PrepareFrame();
             HandleTimerLogic();
+            ReadInput();
 
             for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
             {
-                //I dont like this, the PC is supposed to be a private field on the CPU, not accessible by the general program itself
-                //TODO: Move this cycle into a method inside the CPU, out of the program.cs file
-                if (Cpu.Pc < PROGRAM_START || Cpu.Pc >= MEMORY_SIZE - 1) break;
+                if (Cpu.PCOutOfBounds()) break;
 
                 //1. Emulator cycle goes here (fetch, decode, execute)
                 ushort fetchedInstruction = Cpu.FetchInstruction();
@@ -57,10 +61,7 @@ internal static class Program
                 Console.WriteLine("Executed Instruction: 0x" + fetchedInstruction.ToString("X4"));
             }
 
-            //2. Translate emulator information to SDL2 for rendering
-            HandleEventsAndPrepareFrame();
-
-            //3. Handle SDL2 events and Rendering
+            //3. Present frame
             
             SDL.SDL_RenderPresent(_renderer);
             
@@ -73,26 +74,35 @@ internal static class Program
         Sdl2Killer();
     }
 
-    private static void HandleEventsAndPrepareFrame()
+    private static void PrepareFrame()
+    {
+        for (int y = 0; y < DISPLAY_HEIGHT; y++)
+        {
+            for (int x = 0; x < DISPLAY_WIDTH; x++)
+            {
+                if (Cpu.Display.GetPixel(x, y))
+                    SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255); // White for pixels that are on
+                else
+                    SDL.SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // Black for pixels that are off
+                _rect.x = x * _scaleX;
+                _rect.y = y * _scaleY;
+                SDL.SDL_RenderFillRect(_renderer, ref _rect);
+            }
+        }
+    }
+
+    private static void ReadInput()
+    {
+        //Cpu.Keys[0] = SDL.SDL_GetKeyboardState(out int numKeys)[SDL.SDL_SCANCODE_1] == 1;
+        return;
+    }
+
+    private static void HandleSDLEvents()
         {
             while (SDL.SDL_PollEvent(out SDL.SDL_Event e) != 0)
             {
                 if (e.type == SDL.SDL_EventType.SDL_QUIT)
                     _isRunning = false;
-            }
-
-            for (int y = 0; y < DISPLAY_HEIGHT; y++)
-            {
-                for (int x = 0; x < DISPLAY_WIDTH; x++)
-                {
-                    if (Cpu.Display.GetPixel(x, y))
-                        SDL.SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255); // White for pixels that are on
-                    else
-                        SDL.SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255); // Black for pixels that are off
-                    _rect.x = x * _scaleX;
-                    _rect.y = y * _scaleY;
-                    SDL.SDL_RenderFillRect(_renderer, ref _rect);
-                }
             }
         }
 
