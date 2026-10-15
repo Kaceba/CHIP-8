@@ -158,7 +158,7 @@ namespace CHIP_8
                 switch (nn)
                 {
                     case 0x1E:
-                        _index += _registers[x]; //FX1E: Add VX to I
+                            _index += (ushort)((_index + _registers[x]) & 0xFFF); //FX1E: Add VX to I
                         break;
                     case 0x29:
                         _index = (ushort)(FONTSET_START + (_registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
