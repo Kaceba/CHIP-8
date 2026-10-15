@@ -10,7 +10,7 @@ Legend: ✅ done · 🟡 partly done / has a bug · ❌ missing · ➖ optional
 **50% complete** (40 of 80 items) `██████████░░░░░░░░░░`
 Counting only fully finished items: **35%** (28 of 80).
 
-Last counted 2026-10-11.
+Last counted 2026-10-15.
 
 | Section | Points | Items |
 |---|---|---|
@@ -55,10 +55,10 @@ How it's counted:
 Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter and font; programs load at `0x200`.
 
 - ✅ 4096-byte array, programs load at `0x200` (`src/CPU.cs`, `src/Constants.cs`)
-- [ ] 🟡 **Mask `I` to 12 bits.** `FX1E` can push `_index` past 4095 (`src/CPU.cs:160`), so `DXYN`, `FX33`, `FX55` and `FX65` throw `IndexOutOfRangeException`.
+- [ ] 🟡 **Mask `I` to 12 bits.** The `FX1E` mask was added (`src/CPU.cs:161`) but it is wrong: it uses `+=` on the already-summed value, so `I` becomes `I + ((I + VX) & 0xFFF)`, roughly double what it should be (e.g. `I = 0x300`, `VX = 1` gives `0x601`). It should be `_index = (ushort)((_index + _registers[x]) & 0xFFF);`. Also still open: `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:170-172`, `:180`, `:190`), which can run past `0xFFF` when `I` is valid but near the end. Wrap each access with `& 0xFFF` or throw.
 - [x] ✅ **ROM size check** (`src/Program.cs:32`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:216`) has no guard of its own.
 - [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:30`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
-- ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:118`), used on normal exit and on the ROM-too-large path.
+- ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:119`), used on normal exit and on the ROM-too-large path.
 
 ## Font
 
@@ -73,8 +73,8 @@ Spec: 64×32 monochrome. `DXYN` XORs sprites, sets VF on collision, wraps the st
 
 - ✅ 64×32 framebuffer, XOR drawing, collision flag, `00E0` clear
 - [ ] 🟡 **Clip sprites at the edges** (`src/Display.cs:31-32`). The starting position wraps (mod 64/32), but pixels past the right/bottom edge must be dropped. The code wraps every pixel.
-- [ ] 🟡 **Scale with the window** (`src/Program.cs:107-108`). The window is resizable but the scale is fixed at startup. Use `SDL_RenderSetLogicalSize(64, 32)` instead of drawing 2048 rects by hand.
-- [ ] 🟡 **SDL error handling.** `SDL_Init`, `SDL_CreateWindow` and `SDL_CreateRenderer` results are never checked (`src/Program.cs:100-103`). Remove the stray `SDL_RenderDrawPoint(0, 0)` (`:105`) and the placeholder `int something = SDL_RenderClear(...)` (`:68`).
+- [ ] 🟡 **Scale with the window** (`src/Program.cs:108-109`). The window is resizable but the scale is fixed at startup. Use `SDL_RenderSetLogicalSize(64, 32)` instead of drawing 2048 rects by hand.
+- [ ] 🟡 **SDL error handling.** `SDL_Init`, `SDL_CreateWindow` and `SDL_CreateRenderer` results are never checked (`src/Program.cs:101-104`). Remove the stray `SDL_RenderDrawPoint(0, 0)` (`:106`) and the placeholder `int something = SDL_RenderClear(...)` (`:68`).
 - ➖ Redraw only when `00E0` or `DXYN` ran.
 - ➖ Fade pixels to reduce flicker.
 
@@ -89,9 +89,9 @@ Spec: LIFO of 16-bit return addresses, at least 16 deep.
 
 Spec: delay and sound timers are 8-bit, tick down at 60 Hz independently of CPU speed. The emulator beeps while the sound timer is above 0.
 
-- ✅ Both timers exist and decrement (`src/Program.cs:125-137`)
+- ✅ Both timers exist and decrement (`src/Program.cs:126-138`)
 - [ ] 🟡 **Not really 60 Hz.** They tick once per frame, and a frame is `SDL_Delay(16)` plus render time (`src/Program.cs:45`, `:69`). Tick from a `Stopwatch`, or use `SDL_RENDERER_PRESENTVSYNC`. `TIMER_FREQUENCY` is defined but unused.
-- [ ] ❌ **Sound.** Nothing plays when `SoundTimer > 0` (`src/Program.cs:132-136`). Needs `SDL_INIT_AUDIO` and a square wave.
+- [ ] ❌ **Sound.** Nothing plays when `SoundTimer > 0` (`src/Program.cs:133-137`). Needs `SDL_INIT_AUDIO` and a square wave.
 
 ## Keypad
 
@@ -105,7 +105,7 @@ Z X C V        A 0 B F
 ```
 
 - 🟡 `Cpu.Keys` (`bool[16]`) exists, but nothing ever sets it.
-- [ ] ❌ **Handle `SDL_KEYDOWN` / `SDL_KEYUP`** in the event loop (`src/Program.cs:77-81`) and map scancodes to `Keys[]` using the layout above.
+- [ ] ❌ **Handle `SDL_KEYDOWN` / `SDL_KEYUP`** in the event loop (`src/Program.cs:78-82`) and map scancodes to `Keys[]` using the layout above.
 - ➖ Alternative layouts (DREAM 6800 / ETI-660: 0-F in order).
 
 ## Fetch / decode / execute loop
@@ -172,7 +172,7 @@ The VF ordering bug (`src/CPU.cs:109-129`): the flag is written first and the re
 | `FX07` | VX = delay timer | ✅ |
 | `FX15` | delay timer = VX | ✅ |
 | `FX18` | sound timer = VX | ✅ |
-| `FX1E` | I += VX | 🟡 no 12-bit mask; no VF overflow quirk |
+| `FX1E` | I += VX | 🟡 mask added but uses `+=` (wrong result, see Memory); no VF overflow quirk |
 | `FX29` | I = font address for VX | 🟡 should use `VX & 0xF`; replace the `* 5` with `FONT_HEIGHT` |
 | `FX33` | BCD | ✅ (needs the `I` bounds fix) |
 | `FX55` | store V0..VX | 🟡 modern behavior only, undocumented; no quirk |
@@ -229,7 +229,7 @@ Spec: step execution, pause, and registers/memory display.
 
 ## Code quality (do after the features above)
 
-- [ ] **Encapsulation.** `Program` reads `Cpu.Pc` and mutates the timers directly (`src/Program.cs:51`, `:125-137`). Add `Cpu.Step()` and `Cpu.TickTimers()`, make fields private, and expose read-only views of the display and keys.
+- [ ] **Encapsulation.** `Program` reads `Cpu.Pc` and mutates the timers directly (`src/Program.cs:51`, `:126-138`). Add `Cpu.Step()` and `Cpu.TickTimers()`, make fields private, and expose read-only views of the display and keys.
 - [ ] Magic `64` / `64 * 32` in `Display` (`src/Display.cs:8-17`) → `DISPLAY_WIDTH` / `DISPLAY_HEIGHT`.
 - [ ] `oldPixel ^ true` → `!oldPixel` (`src/Display.cs:41`).
 - [ ] Remove the stale "puts 0 to display for testing" comment (`src/Display.cs:24`).
