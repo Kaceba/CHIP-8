@@ -232,11 +232,6 @@ namespace CHIP_8
             }
         }
 
-        private byte WaitForKeyPress()
-        {
-            throw new NotImplementedException();
-        }
-
         protected internal void LoadProgram(byte[] program)
         {
             //load program into memory starting at 0x200
