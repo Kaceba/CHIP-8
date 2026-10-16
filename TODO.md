@@ -7,10 +7,10 @@ Legend: ✅ done · 🟡 partly done / has a bug · ❌ missing · ➖ optional
 
 ## Progress
 
-**55% complete** (44.5 of 81 items) `███████████░░░░░░░░░`
-Counting only fully finished items: **41%** (33 of 81).
+**58% complete** (47 of 81 items) `████████████░░░░░░░░`
+Counting only fully finished items: **44%** (36 of 81).
 
-Last counted 2026-10-16 (after commit `629ea0d`).
+Last counted 2026-10-16 (after commit `3107a8f`).
 
 | Section | Points | Items |
 |---|---|---|
@@ -19,15 +19,15 @@ Last counted 2026-10-16 (after commit `629ea0d`).
 | Display | 2.5 | 4 |
 | Stack | 1.5 | 2 |
 | Timers | 1.5 | 3 |
-| Keypad | 0.5 | 1 |
+| Keypad | 1 | 1 |
 | Fetch / decode / execute loop | 4 | 6 |
-| Instruction set (34 opcodes) | 27 | 34 |
+| Instruction set (34 opcodes) | 28 | 34 |
 | Quirks / configuration | 0 | 1 |
 | UI | 0 | 7 |
 | Debugging tools | 0 | 3 |
 | Testing | 2 | 5 |
-| Code quality | 1 | 10 |
-| **Total** | **44.5** | **81** |
+| Code quality | 2 | 10 |
+| **Total** | **47** | **81** |
 
 How it's counted:
 - Each required task or finished milestone in a section is one item, and each opcode is one item. `0NNN` (intentionally skipped) and everything marked ➖ optional or under Extensions are left out.
@@ -43,9 +43,9 @@ How it's counted:
 | Display | 🟡 | sprite clipping, window scaling |
 | Stack | 🟡 | overflow/underflow guards |
 | Timers | 🟡 | real 60 Hz timing, no beep |
-| Keypad | 🟡 | input is read, but `KeyMap` is in the wrong order so every key is scrambled; `FX0A` still missing |
+| Keypad | ✅ | nothing (not yet checked against the `6-keypad` ROM) |
 | Fetch/decode/execute loop | 🟡 | configurable speed, unknown-opcode error, PC bounds error |
-| Instruction set | 🟡 | 1 opcode missing (`FX0A` throws `NotImplementedException`), several with bugs or no quirk option |
+| Instruction set | 🟡 | all opcodes present; several with bugs (`DXYN` clipping, VF ordering, stack guards) or no quirk option |
 | Quirks / configuration | ❌ | no config at all |
 | Debugging tools | ❌ | none |
 | Test ROMs | 🟡 | Timendus ROMs are in `roms/`, but none have been verified yet |
@@ -56,7 +56,7 @@ Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter
 
 - ✅ 4096-byte array, programs load at `0x200` (`src/CPU.cs`, `src/Constants.cs`)
 - ➖ **Keep `I + offset` inside memory (optional).** `FX1E` now wraps `I` correctly (`src/CPU.cs:171`). `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:180-182`, `:190`, `:200`), which can only run past `0xFFF` if a ROM points `I` very close to the end of memory. Unlikely in real ROMs; if it ever matters, wrap each access with `& 0xFFF` or throw (the `Chip8Exception` popup covers it).
-- [x] ✅ **ROM size check** (`src/Program.cs:31`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:228`) has no guard of its own.
+- [x] ✅ **ROM size check** (`src/Program.cs:31`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:235`) has no guard of its own.
 - [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:29`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
 - ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:137`), used on normal exit and on the ROM-too-large path.
 
@@ -65,7 +65,7 @@ Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter
 Spec: 16 hex-digit sprites (4×5 px, 5 bytes each) stored anywhere in `000-1FF`; `050-09F` is the usual place.
 
 - ✅ Font data matches the guide byte for byte, stored at `0x50` (`src/Constants.cs`)
-- ➖ Font loading is now `Cpu.LoadFontset()` (`src/CPU.cs:239`), called from `Program.Main` (`src/Program.cs:23`). Optionally call it from the `Cpu` constructor instead so the caller can't forget.
+- ➖ Font loading is now `Cpu.LoadFontset()` (`src/CPU.cs:246`), called from `Program.Main` (`src/Program.cs:23`). Optionally call it from the `Cpu` constructor instead so the caller can't forget.
 
 ## Display
 
@@ -90,7 +90,7 @@ Spec: LIFO of 16-bit return addresses, at least 16 deep.
 Spec: delay and sound timers are 8-bit, tick down at 60 Hz independently of CPU speed. The emulator beeps while the sound timer is above 0.
 
 - ✅ Both timers exist and decrement (`src/Program.cs:144-156`)
-- [ ] 🟡 **Not really 60 Hz.** They tick once per frame, and a frame is `SDL_Delay(16)` plus render time (`src/Program.cs:47`, `:67`). Tick from a `Stopwatch`, or use `SDL_RENDERER_PRESENTVSYNC`. `TIMER_FREQUENCY` is defined but unused.
+- [ ] 🟡 **Not really 60 Hz.** They tick once per frame, and a frame is `SDL_Delay(16)` plus render time (`src/Program.cs:47`, `:67`). Tick from a `Stopwatch` (one tick per 1/60 s of elapsed time, independent of how many frames passed), or use `SDL_RENDERER_PRESENTVSYNC`. `TIMER_FREQUENCY` is defined but unused. Share the `Stopwatch` with the CPU speed item under the main loop.
 - [ ] ❌ **Sound.** Nothing plays when `SoundTimer > 0` (`src/Program.cs:151-155`). Needs `SDL_INIT_AUDIO` and a square wave.
 
 ## Keypad
@@ -105,7 +105,7 @@ Z X C V        A 0 B F
 ```
 
 - ✅ The build is fixed again. `ReadInput()` (`src/Program.cs:91`) now copies SDL's keyboard state into `_keyState` (sized from `numKeys`, allocated once) and fills `Cpu.Keys[]` from it, after `HandleSDLEvents()` and before the CPU runs.
-- [ ] 🟡 **`KeyMap` is in the wrong order** (`src/Constants.cs:57`). `ReadInput` does `Cpu.Keys[i] = _keyState[(int)KeyMap[i]] == 1`, so `KeyMap[i]` has to be the scancode for **CHIP-8 key `i`**. The table is laid out as the physical keyboard grid instead (`1 2 3 4 / Q W E R / ...`), so its index 0 is the `1` key, not CHIP-8 key 0. Result: pressing `1` sets `Keys[0]`, `X` sets `Keys[13]` (`D`), and every key is scrambled. Reorder it to CHIP-8 order 0 to F: `X, 1, 2, 3, Q, W, E, A, S, D, Z, C, 4, R, F, V`. The debug print would show "Key 0 is pressed" when you press `1`.
+- [x] ✅ **`KeyMap` is in CHIP-8 order** (`src/Constants.cs:57`). Index `i` is the scancode for CHIP-8 key `i` (`X, 1, 2, 3, Q, W, E, A, S, D, Z, C, 4, R, F, V`), which is what `ReadInput` expects. Checking it against the keypad test ROM (`6-keypad`) is still to do under Testing.
 - ➖ Remove the per-frame debug `Console.WriteLine($"Key {i:X} is pressed.")` in `ReadInput` (`src/Program.cs:100-105`) once the mapping is checked; it prints every frame while a key is held.
 - ➖ `EX9E` / `EXA1` index `Keys[VX]` without masking `VX` to 0-F, so a ROM with `VX > 15` would throw. Use `VX & 0xF` if it ever matters.
 - ➖ Alternative layouts (DREAM 6800 / ETI-660: 0-F in order).
@@ -115,9 +115,9 @@ Z X C V        A 0 B F
 Spec: fetch two bytes at PC, advance PC by 2, decode on the first nibble after extracting X, Y, N, NN, NNN, execute. Default speed about 700 instructions/second, configurable.
 
 - ✅ Fetch (big-endian, PC += 2), decode and extract (`src/CPU.cs:21-43`)
-- [ ] 🟡 **Speed is hardcoded at 10 instructions per frame (about 600/s)** (`src/Program.cs:50`). Make it configurable, with a default near 700/s.
+- [ ] 🟡 **Decouple CPU speed from the frame rate.** The loop runs a fixed 10 instructions per frame (`src/Program.cs:50`), so the speed is whatever the frame rate happens to give (about 550 to 600 per second) and any frame that runs long slows the whole machine. This was the cause of the visible lag in the `6-keypad` ROM: a redraw takes a few hundred instructions, which is half a second at this speed. Instead, measure elapsed time each frame with a `Stopwatch` and run `elapsedSeconds × instructionsPerSecond` instructions (carry the fractional remainder to the next frame). Make `instructionsPerSecond` configurable, with a default around 700 to 1000. Keep the input read once per frame, before the instructions. Do this together with the 60 Hz timer fix under Timers, using the same `Stopwatch`.
 - [ ] 🟡 **Unknown opcodes are silently ignored**, including inside the `0x0` and `8XY?` sub-switches (`src/CPU.cs`). The guide recommends raising an error.
-- [ ] 🟡 **PC bounds check still silently `break`s.** It moved into `Cpu.PCOutOfBounds()` (`src/CPU.cs:234`), but `Program` still calls it and just exits the 10-instruction loop (`src/Program.cs:52`), so the emulator keeps spinning with the CPU stopped and no message. Check inside `FetchInstruction()` and throw `Chip8Exception` instead. The lower bound (`Pc < PROGRAM_START`) is stricter than the hardware; consider keeping only the upper bound.
+- [ ] 🟡 **PC bounds check still silently `break`s.** It moved into `Cpu.PCOutOfBounds()` (`src/CPU.cs:241`), but `Program` still calls it and just exits the 10-instruction loop (`src/Program.cs:52`), so the emulator keeps spinning with the CPU stopped and no message. Check inside `FetchInstruction()` and throw `Chip8Exception` instead. The lower bound (`Pc < PROGRAM_START`) is stricter than the hardware; consider keeping only the upper bound.
 - [x] ✅ **Render after the CPU runs, not before.** `PrepareFrame()` now runs after the instruction loop and before `SDL_RenderPresent` (`src/Program.cs:62`), so the presented frame matches the CPU state.
 - [ ] 🟡 **`Console.WriteLine` per instruction** (`src/Program.cs:58`) floods the terminal. Gate it behind a debug flag.
 
@@ -165,9 +165,9 @@ The VF ordering bug (`src/CPU.cs:109-129`): the flag is written first and the re
 ### Keyboard
 | Opcode | Meaning | Status |
 |---|---|---|
-| `EX9E` | skip if key VX pressed | ✅ (`src/CPU.cs:157-160`); has no effect until `Keys[]` is filled |
-| `EXA1` | skip if key VX not pressed | ✅ (`src/CPU.cs:161-164`); has no effect until `Keys[]` is filled |
-| `FX0A` | wait for key, store in VX | ❌ calls `WaitForKeyPress()`, which just throws `NotImplementedException` (`src/CPU.cs:214-226`), so any ROM using it now crashes. It must hold PC (`Pc -= 2`) until a key is pressed instead of blocking inside the method; the original VIP waited for release. |
+| `EX9E` | skip if key VX pressed | ✅ (`src/CPU.cs:157-160`) |
+| `EXA1` | skip if key VX not pressed | ✅ (`src/CPU.cs:161-164`) |
+| `FX0A` | wait for key, store in VX | ✅ (`src/CPU.cs:214-229`). Scans `Keys[]` and, if none is down, does `Pc -= 2` so the instruction runs again; timers and rendering keep going. It stores the key on press; the original VIP stored it on release (see Quirks). |
 
 ### Timers, I, font and memory
 | Opcode | Meaning | Status |
@@ -195,6 +195,7 @@ Spec: make the ambiguous behaviors configurable. The test ROMs expect the modern
 | `FX1E` | no flag | VF = 1 on overflow past `0xFFF` (Amiga; Spacefight 2091!) |
 | `8XY1/2/3` | VF reset to 0 | VF untouched ✅ |
 | `DXYN` | waits for vblank | no wait ✅ |
+| `FX0A` | key registered on release | key registered on press ✅ |
 
 ## UI (SDL2 only: drag-and-drop, popups, hotkeys)
 
@@ -237,7 +238,7 @@ Spec: step execution, pause, and registers/memory display.
 - [ ] `oldPixel ^ true` → `!oldPixel` (`src/Display.cs:41`).
 - [ ] Remove the stale "puts 0 to display for testing" comment (`src/Display.cs:24`).
 - [ ] Rename the public field `Display.display` (e.g. `Pixels`); use `Array.Clear` for `00E0`.
-- [ ] Fix the `case 0xF:` indentation (`src/CPU.cs:167-221`).
+- [x] Fix the `case 0xF:` indentation (the file was reformatted).
 - [ ] Unused constants (`src/Constants.cs`): `SPRITE_MAX_HEIGHT`, `FONT_WIDTH`, `FONT_HEIGHT`, `REGISTER_COUNT`, `STACK_SIZE`, `TIMER_FREQUENCY`. Use them (the register and stack arrays hardcode `16`) or delete them.
 - [ ] Untrack `src/.idea/` and add it to `.gitignore`.
 - [x] Remove the unused `using System.Runtime.CompilerServices;` and the stale "Still missing EX9E, EXA1" comment.
@@ -246,10 +247,10 @@ Spec: step execution, pause, and registers/memory display.
 
 ## Suggested order
 
-1. **Keypad:** fix the `KeyMap` order (`EX9E` / `EXA1` and the SDL read are already in), then implement `FX0A`.
+1. ~~**Keypad:** SDL read, `KeyMap`, `EX9E`, `EXA1`, `FX0A`~~ (done; check it with the `6-keypad` ROM).
 2. **Fix what's wrong in finished features:** `DXYN` clipping, VF write ordering, the bounds and stack guards.
 3. **UI basics:** `Cpu.Reset()`, `Chip8Exception` + error popup, drag-and-drop ROMs, so progress on the Timendus ROMs is measurable.
 4. **Quirks config**, then work through the `quirks` ROM.
-5. **Timers and sound:** real 60 Hz tick, then the beep.
-6. **Configurable speed, unknown-opcode errors, debugging tools.**
+5. **Timing and sound:** one `Stopwatch` driving both the 60 Hz timer tick and a time-based CPU speed (configurable instructions per second), then the beep.
+6. **Unknown-opcode errors, debugging tools.**
 7. **Code quality pass.**

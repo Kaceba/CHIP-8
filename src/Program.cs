@@ -26,7 +26,7 @@ internal static class Program
         Sdl2Starter();
 
         //Load ROM into memory and check if it fits
-        byte[] rom = File.ReadAllBytes(Path.Combine("..", "roms", "1-chip8-logo.ch8"));
+        byte[] rom = File.ReadAllBytes(Path.Combine("..", "roms", "6-keypad.ch8"));
 
         if (rom.Length > MEMORY_SIZE - PROGRAM_START)
         {
@@ -47,7 +47,7 @@ internal static class Program
             HandleTimerLogic();
             ReadInput();
 
-            for (int i = 0; i < 10; i++)  // Execute ~10 instructions per frame
+            for (int i = 0; i < 1000; i++)  // Execute ~10 instructions per frame
             {
                 if (Cpu.PCOutOfBounds()) break;
 
@@ -96,13 +96,6 @@ internal static class Program
 
         for (int i = 0; i < 16; i++)
             Cpu.Keys[i] = _keyState[(int)KeyMap[i]] == 1;
-
-        // For debugging: print the state of the keys
-        for (int i = 0; i < 16; i++)
-        {
-            if (Cpu.Keys[i])
-                Console.WriteLine($"Key {i:X} is pressed.");
-        }
     }
 
     private static void HandleSDLEvents()
