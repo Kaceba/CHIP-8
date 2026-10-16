@@ -56,26 +56,24 @@ namespace CHIP_8
 
         internal static readonly SDL.SDL_Scancode[] KeyMap =
         {
+            SDL.SDL_Scancode.SDL_SCANCODE_X, // 0
             SDL.SDL_Scancode.SDL_SCANCODE_1, // 1
             SDL.SDL_Scancode.SDL_SCANCODE_2, // 2
             SDL.SDL_Scancode.SDL_SCANCODE_3, // 3
-            SDL.SDL_Scancode.SDL_SCANCODE_4, // C
-
             SDL.SDL_Scancode.SDL_SCANCODE_Q, // 4
             SDL.SDL_Scancode.SDL_SCANCODE_W, // 5
             SDL.SDL_Scancode.SDL_SCANCODE_E, // 6
-            SDL.SDL_Scancode.SDL_SCANCODE_R, // D
-
             SDL.SDL_Scancode.SDL_SCANCODE_A, // 7
             SDL.SDL_Scancode.SDL_SCANCODE_S, // 8
             SDL.SDL_Scancode.SDL_SCANCODE_D, // 9
-            SDL.SDL_Scancode.SDL_SCANCODE_F, // E
-
             SDL.SDL_Scancode.SDL_SCANCODE_Z, // A
-            SDL.SDL_Scancode.SDL_SCANCODE_X, // 0
             SDL.SDL_Scancode.SDL_SCANCODE_C, // B
+            SDL.SDL_Scancode.SDL_SCANCODE_4, // C
+            SDL.SDL_Scancode.SDL_SCANCODE_R, // D
+            SDL.SDL_Scancode.SDL_SCANCODE_F, // E
             SDL.SDL_Scancode.SDL_SCANCODE_V, // F
         };
+
 
         // Timers
         internal const int TIMER_FREQUENCY = 60;              // 60Hz timer decrement
