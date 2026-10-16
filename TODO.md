@@ -7,10 +7,10 @@ Legend: ✅ done · 🟡 partly done / has a bug · ❌ missing · ➖ optional
 
 ## Progress
 
-**52% complete** (42 of 81 items) `██████████░░░░░░░░░░`
-Counting only fully finished items: **38%** (31 of 81).
+**54% complete** (44 of 81 items) `███████████░░░░░░░░░`
+Counting only fully finished items: **41%** (33 of 81).
 
-Last counted 2026-10-15 (after commit `4b55f10`).
+Last counted 2026-10-16 (after commit `88d74b9`).
 
 | Section | Points | Items |
 |---|---|---|
@@ -20,14 +20,14 @@ Last counted 2026-10-15 (after commit `4b55f10`).
 | Stack | 1.5 | 2 |
 | Timers | 1.5 | 3 |
 | Keypad | 0 | 1 |
-| Fetch / decode / execute loop | 3 | 6 |
+| Fetch / decode / execute loop | 4 | 6 |
 | Instruction set (34 opcodes) | 27 | 34 |
 | Quirks / configuration | 0 | 1 |
 | UI | 0 | 7 |
 | Debugging tools | 0 | 3 |
 | Testing | 2 | 5 |
-| Code quality | 0 | 10 |
-| **Total** | **42** | **81** |
+| Code quality | 1 | 10 |
+| **Total** | **44** | **81** |
 
 How it's counted:
 - Each required task or finished milestone in a section is one item, and each opcode is one item. `0NNN` (intentionally skipped) and everything marked ➖ optional or under Extensions are left out.
@@ -43,8 +43,8 @@ How it's counted:
 | Display | 🟡 | sprite clipping, window scaling |
 | Stack | 🟡 | overflow/underflow guards |
 | Timers | 🟡 | real 60 Hz timing, no beep |
-| Keypad | ❌ | key events not wired up (`ReadInput` is an empty stub) |
-| Fetch/decode/execute loop | 🟡 | configurable speed, unknown-opcode error, render order |
+| Keypad | ❌ | `ReadInput` has a single test line that doesn't compile; no real key mapping |
+| Fetch/decode/execute loop | 🟡 | configurable speed, unknown-opcode error, PC bounds error |
 | Instruction set | 🟡 | 1 opcode missing (`FX0A` throws `NotImplementedException`), several with bugs or no quirk option |
 | Quirks / configuration | ❌ | no config at all |
 | Debugging tools | ❌ | none |
@@ -55,17 +55,17 @@ How it's counted:
 Spec: 4 KB, writable. I and PC are 12-bit. Reserve `000-1FF` for the interpreter and font; programs load at `0x200`.
 
 - ✅ 4096-byte array, programs load at `0x200` (`src/CPU.cs`, `src/Constants.cs`)
-- ➖ **Keep `I + offset` inside memory (optional).** `FX1E` now wraps `I` correctly (`src/CPU.cs:172`). `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:181-183`, `:191`, `:201`), which can only run past `0xFFF` if a ROM points `I` very close to the end of memory. Unlikely in real ROMs; if it ever matters, wrap each access with `& 0xFFF` or throw (the `Chip8Exception` popup covers it).
-- [x] ✅ **ROM size check** (`src/Program.cs:33`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:229`) has no guard of its own.
-- [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:31`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
-- ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:129`), used on normal exit and on the ROM-too-large path.
+- ➖ **Keep `I + offset` inside memory (optional).** `FX1E` now wraps `I` correctly (`src/CPU.cs:171`). `DXYN`, `FX33`, `FX55` and `FX65` read or write at `I + offset` (`src/CPU.cs:148`, `:180-182`, `:190`, `:200`), which can only run past `0xFFF` if a ROM points `I` very close to the end of memory. Unlikely in real ROMs; if it ever matters, wrap each access with `& 0xFFF` or throw (the `Chip8Exception` popup covers it).
+- [x] ✅ **ROM size check** (`src/Program.cs:28`). Lives in `Program.cs`, uses `>` so a ROM of exactly 3584 bytes loads, and cleans up through `Sdl2Killer()`. It still prints to the console; the popup comes with the UI work below. `LoadProgram` itself (`src/CPU.cs:228`) has no guard of its own.
+- [ ] 🟡 **ROM path is hardcoded and relative to the working directory** (`src/Program.cs:26`, currently `1-chip8-logo.ch8`). Replaced by drag-and-drop (see UI); optionally also accept a command-line path.
+- ✅ SDL teardown is now a single `Sdl2Killer()` helper (`src/Program.cs:123`), used on normal exit and on the ROM-too-large path.
 
 ## Font
 
 Spec: 16 hex-digit sprites (4×5 px, 5 bytes each) stored anywhere in `000-1FF`; `050-09F` is the usual place.
 
 - ✅ Font data matches the guide byte for byte, stored at `0x50` (`src/Constants.cs`)
-- ➖ Move font loading from `Program.Main` into the `Cpu` constructor (`src/Program.cs:20-24`).
+- ➖ Font loading is now `Cpu.LoadFontset()` (`src/CPU.cs:239`), called from `Program.Main` (`src/Program.cs:20`). Optionally call it from the `Cpu` constructor instead so the caller can't forget.
 
 ## Display
 
@@ -73,8 +73,8 @@ Spec: 64×32 monochrome. `DXYN` XORs sprites, sets VF on collision, wraps the st
 
 - ✅ 64×32 framebuffer, XOR drawing, collision flag, `00E0` clear
 - [ ] 🟡 **Clip sprites at the edges** (`src/Display.cs:31-32`). The starting position wraps (mod 64/32), but pixels past the right/bottom edge must be dropped. The code wraps every pixel.
-- [ ] 🟡 **Scale with the window** (`src/Program.cs:118-119`). The window is resizable but the scale is fixed at startup. Use `SDL_RenderSetLogicalSize(64, 32)` instead of drawing 2048 rects by hand.
-- [ ] 🟡 **SDL error handling.** `SDL_Init`, `SDL_CreateWindow` and `SDL_CreateRenderer` results are never checked (`src/Program.cs:111-114`). Remove the stray `SDL_RenderDrawPoint(0, 0)` (`:116`) and the placeholder `int something = SDL_RenderClear(...)` (`:69`).
+- [ ] 🟡 **Scale with the window** (`src/Program.cs:112-113`). The window is resizable but the scale is fixed at startup. Use `SDL_RenderSetLogicalSize(64, 32)` instead of drawing 2048 rects by hand.
+- [ ] 🟡 **SDL error handling.** `SDL_Init`, `SDL_CreateWindow` and `SDL_CreateRenderer` results are never checked (`src/Program.cs:105-108`). Remove the stray `SDL_RenderDrawPoint(0, 0)` (`:110`) and the placeholder `int something = SDL_RenderClear(...)` (`:63`).
 - ➖ Redraw only when `00E0` or `DXYN` ran.
 - ➖ Fade pixels to reduce flicker.
 
@@ -89,9 +89,9 @@ Spec: LIFO of 16-bit return addresses, at least 16 deep.
 
 Spec: delay and sound timers are 8-bit, tick down at 60 Hz independently of CPU speed. The emulator beeps while the sound timer is above 0.
 
-- ✅ Both timers exist and decrement (`src/Program.cs:136-148`)
-- [ ] 🟡 **Not really 60 Hz.** They tick once per frame, and a frame is `SDL_Delay(16)` plus render time (`src/Program.cs:50`, `:70`). Tick from a `Stopwatch`, or use `SDL_RENDERER_PRESENTVSYNC`. `TIMER_FREQUENCY` is defined but unused.
-- [ ] ❌ **Sound.** Nothing plays when `SoundTimer > 0` (`src/Program.cs:143-147`). Needs `SDL_INIT_AUDIO` and a square wave.
+- ✅ Both timers exist and decrement (`src/Program.cs:130-142`)
+- [ ] 🟡 **Not really 60 Hz.** They tick once per frame, and a frame is `SDL_Delay(16)` plus render time (`src/Program.cs:44`, `:64`). Tick from a `Stopwatch`, or use `SDL_RENDERER_PRESENTVSYNC`. `TIMER_FREQUENCY` is defined but unused.
+- [ ] ❌ **Sound.** Nothing plays when `SoundTimer > 0` (`src/Program.cs:137-141`). Needs `SDL_INIT_AUDIO` and a square wave.
 
 ## Keypad
 
@@ -104,8 +104,9 @@ A S D F        7 8 9 E
 Z X C V        A 0 B F
 ```
 
-- 🟡 `Cpu.Keys` (`bool[16]`) exists and `EX9E` / `EXA1` read it, but nothing ever sets it. `ReadInput()` (`src/Program.cs:94`) is an empty stub with a commented-out `SDL_GetKeyboardState` line.
-- [ ] ❌ **Fill `Keys[]` from SDL.** Either handle `SDL_KEYDOWN` / `SDL_KEYUP` in `HandleSDLEvents()` (`src/Program.cs:100-106`) or implement `ReadInput()` with `SDL_GetKeyboardState`, and map scancodes to `Keys[]` using the layout above. Event polling already runs at the top of the frame, before the CPU, which is the right place.
+- ⚠️ **The build is broken at `88d74b9`.** `ReadInput()` (`src/Program.cs:90`) uses `SDL.SDL_SCANCODE_1`, which doesn't exist in SDL2-CS (error CS0117). The scancodes live in the `SDL.SDL_Scancode` enum, and `SDL_GetKeyboardState` returns an `IntPtr`, so the line needs `Marshal.ReadByte`: `Cpu.Keys[0] = Marshal.ReadByte(SDL.SDL_GetKeyboardState(out _), (int)SDL.SDL_Scancode.SDL_SCANCODE_1) == 1;` (checked to compile in a scratch copy).
+- 🟡 `Cpu.Keys` (`bool[16]`) exists and `EX9E` / `EXA1` read it. `ReadInput()` is the start of filling it, but the test line sets only `Keys[0]` from the `1` key; the standard layout puts CHIP-8 key `1` on `1` and key `0` on `X`.
+- [ ] ❌ **Fill `Keys[]` from SDL.** Map all 16 keys using the layout above, either with `SDL_GetKeyboardState` in `ReadInput()` (`src/Program.cs:88`) or with `SDL_KEYDOWN` / `SDL_KEYUP` in `HandleSDLEvents()` (`src/Program.cs:94-100`). Event polling already runs at the top of the frame, before the CPU, which is the right place.
 - ➖ `EX9E` / `EXA1` index `Keys[VX]` without masking `VX` to 0-F, so a ROM with `VX > 15` would throw. Use `VX & 0xF` if it ever matters.
 - ➖ Alternative layouts (DREAM 6800 / ETI-660: 0-F in order).
 
@@ -114,11 +115,11 @@ Z X C V        A 0 B F
 Spec: fetch two bytes at PC, advance PC by 2, decode on the first nibble after extracting X, Y, N, NN, NNN, execute. Default speed about 700 instructions/second, configurable.
 
 - ✅ Fetch (big-endian, PC += 2), decode and extract (`src/CPU.cs:21-43`)
-- [ ] 🟡 **Speed is hardcoded at 10 instructions per frame (about 600/s)** (`src/Program.cs:53`). Make it configurable, with a default near 700/s.
+- [ ] 🟡 **Speed is hardcoded at 10 instructions per frame (about 600/s)** (`src/Program.cs:47`). Make it configurable, with a default near 700/s.
 - [ ] 🟡 **Unknown opcodes are silently ignored**, including inside the `0x0` and `8XY?` sub-switches (`src/CPU.cs`). The guide recommends raising an error.
-- [ ] 🟡 **PC bounds check still silently `break`s.** It moved into `Cpu.PCOutOfBounds()` (`src/CPU.cs:235`), but `Program` still calls it and just exits the 10-instruction loop (`src/Program.cs:55`), so the emulator keeps spinning with the CPU stopped and no message. Check inside `FetchInstruction()` and throw `Chip8Exception` instead. The lower bound (`Pc < PROGRAM_START`) is stricter than the hardware; consider keeping only the upper bound.
-- [ ] ❌ **Render after the CPU runs, not before.** `PrepareFrame()` draws the pixels before the 10 instructions execute (`src/Program.cs:49` vs `:53`), so each presented frame shows the state from the previous one. Move it between the instruction loop and `SDL_RenderPresent`.
-- [ ] 🟡 **`Console.WriteLine` per instruction** (`src/Program.cs:61`) floods the terminal. Gate it behind a debug flag.
+- [ ] 🟡 **PC bounds check still silently `break`s.** It moved into `Cpu.PCOutOfBounds()` (`src/CPU.cs:234`), but `Program` still calls it and just exits the 10-instruction loop (`src/Program.cs:49`), so the emulator keeps spinning with the CPU stopped and no message. Check inside `FetchInstruction()` and throw `Chip8Exception` instead. The lower bound (`Pc < PROGRAM_START`) is stricter than the hardware; consider keeping only the upper bound.
+- [x] ✅ **Render after the CPU runs, not before.** `PrepareFrame()` now runs after the instruction loop and before `SDL_RenderPresent` (`src/Program.cs:59`), so the presented frame matches the CPU state.
+- [ ] 🟡 **`Console.WriteLine` per instruction** (`src/Program.cs:55`) floods the terminal. Gate it behind a debug flag.
 
 ## Instruction set
 
@@ -164,9 +165,9 @@ The VF ordering bug (`src/CPU.cs:109-129`): the flag is written first and the re
 ### Keyboard
 | Opcode | Meaning | Status |
 |---|---|---|
-| `EX9E` | skip if key VX pressed | ✅ (`src/CPU.cs:158-161`); has no effect until `Keys[]` is filled |
-| `EXA1` | skip if key VX not pressed | ✅ (`src/CPU.cs:162-165`); has no effect until `Keys[]` is filled |
-| `FX0A` | wait for key, store in VX | ❌ calls `WaitForKeyPress()`, which just throws `NotImplementedException` (`src/CPU.cs:215-227`), so any ROM using it now crashes. It must hold PC (`Pc -= 2`) until a key is pressed instead of blocking inside the method; the original VIP waited for release. |
+| `EX9E` | skip if key VX pressed | ✅ (`src/CPU.cs:157-160`); has no effect until `Keys[]` is filled |
+| `EXA1` | skip if key VX not pressed | ✅ (`src/CPU.cs:161-164`); has no effect until `Keys[]` is filled |
+| `FX0A` | wait for key, store in VX | ❌ calls `WaitForKeyPress()`, which just throws `NotImplementedException` (`src/CPU.cs:214-226`), so any ROM using it now crashes. It must hold PC (`Pc -= 2`) until a key is pressed instead of blocking inside the method; the original VIP waited for release. |
 
 ### Timers, I, font and memory
 | Opcode | Meaning | Status |
@@ -203,7 +204,7 @@ Goal: drop ROMs onto the window, tweak small settings, and get a popup that stop
 - [ ] ❌ **`Cpu.Reset()`**: clear memory, registers, stack, display and timers, reload the font, set `PC = 0x200`. Called on every ROM load.
 - [ ] ❌ **Drag-and-drop ROMs.** Handle `SDL_DROPFILE` in the event loop (`src/Program.cs`); read the path with `SDL.UTF8_ToManaged(e.drop.file, true)`, which also frees the native string. Then size-check, `Reset()`, load.
 - [ ] ❌ **`Chip8Exception`** thrown by the CPU for unknown opcodes, stack over/underflow and out-of-range memory access (this replaces the silent ignores and crashes listed above).
-- [ ] ❌ **Error popup.** The main loop catches `Chip8Exception`, calls `SDL.SDL_ShowSimpleMessageBox` (modal, with the window as parent) and switches to `Halted`. The user can then drop another ROM or reset. Use the same path for ROM load errors, including the size check in `src/Program.cs:30-40`, which still prints to the console (its `TODO` comment already says a popup would be better).
+- [ ] ❌ **Error popup.** The main loop catches `Chip8Exception`, calls `SDL.SDL_ShowSimpleMessageBox` (modal, with the window as parent) and switches to `Halted`. The user can then drop another ROM or reset. Use the same path for ROM load errors, including the size check in `src/Program.cs:25-35`, which still prints to the console (its `TODO` comment already says a popup would be better).
 - [ ] ❌ **`Settings` object** (speed, quirks, colors) read by the main loop; the same object backs the `Quirks` config above.
 - [ ] ❌ **Hotkeys** for the small settings, with the window title as feedback (e.g. "700 ips · paused"): speed up/down, pause, reset, quirk toggles.
 - ➖ Dear ImGui panel later, if hotkeys feel too cramped.
@@ -231,15 +232,16 @@ Spec: step execution, pause, and registers/memory display.
 
 ## Code quality (do after the features above)
 
-- [ ] **Encapsulation.** `Program` no longer reads `Cpu.Pc` directly (it uses `PCOutOfBounds()`), but `Pc`, `Keys`, `Memory` and the timers are still `internal` fields, and `Program` still mutates the timers (`src/Program.cs:136-148`). Add `Cpu.Step()` and `Cpu.TickTimers()`, make fields private, and expose read-only views of the display and keys.
+- [ ] **Encapsulation.** `Program` no longer reads `Cpu.Pc` directly (it uses `PCOutOfBounds()`), but `Pc`, `Keys`, `Memory` and the timers are still `internal` fields, and `Program` still mutates the timers (`src/Program.cs:130-142`). Add `Cpu.Step()` and `Cpu.TickTimers()`, make fields private, and expose read-only views of the display and keys.
 - [ ] Magic `64` / `64 * 32` in `Display` (`src/Display.cs:8-17`) → `DISPLAY_WIDTH` / `DISPLAY_HEIGHT`.
 - [ ] `oldPixel ^ true` → `!oldPixel` (`src/Display.cs:41`).
 - [ ] Remove the stale "puts 0 to display for testing" comment (`src/Display.cs:24`).
 - [ ] Rename the public field `Display.display` (e.g. `Pixels`); use `Array.Clear` for `00E0`.
-- [ ] Fix the `case 0xF:` indentation (`src/CPU.cs:168-222`).
+- [ ] Fix the `case 0xF:` indentation (`src/CPU.cs:167-221`).
 - [ ] Unused constants (`src/Constants.cs`): `SPRITE_MAX_HEIGHT`, `FONT_WIDTH`, `FONT_HEIGHT`, `REGISTER_COUNT`, `STACK_SIZE`, `TIMER_FREQUENCY`. Use them (the register and stack arrays hardcode `16`) or delete them.
 - [ ] Untrack `src/.idea/` and add it to `.gitignore`.
-- [ ] Remove the unused `using System.Runtime.CompilerServices;` (`src/Program.cs:2`) and the stale "Still missing EX9E, EXA1" comment (`src/CPU.cs:155`).
+- [x] Remove the unused `using System.Runtime.CompilerServices;` and the stale "Still missing EX9E, EXA1" comment.
+- ➖ `Cpu` methods are now `protected internal` (`src/CPU.cs`). On an `internal` class that is effectively plain `internal`; `protected` only matters with subclasses, so `internal` (or `private` after the encapsulation pass) says what you mean.
 - [ ] Update `README.md` once input, sound and ROM selection land.
 
 ## Suggested order

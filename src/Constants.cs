@@ -15,7 +15,7 @@ namespace CHIP_8
         //Memory layout
         internal const ushort MEMORY_SIZE = 0x1000;           // 4KB total memory
         internal const ushort PROGRAM_START = 0x200;          // Programs start at 512
-        internal const ushort FONTSET_START = 0x50;           
+        internal const ushort FONTSET_START = 0x50;
 
         // Display
         internal const int DISPLAY_WIDTH = 64;
@@ -26,9 +26,9 @@ namespace CHIP_8
         internal const int STACK_SIZE = 16;
 
         // Font
-        internal const int FONT_HEIGHT = 5;                   
-        internal const int FONT_WIDTH = 4;     
-        
+        internal const int FONT_HEIGHT = 5;
+        internal const int FONT_WIDTH = 4;
+
         // Sprites
         internal const int SPRITE_MAX_HEIGHT = 15;            // Max height for sprites (0-F), idk if i need this
         internal const int SPRITE_MAX_WIDTH = 8;              // Max width for sprites (8 bits)
@@ -52,6 +52,29 @@ namespace CHIP_8
             0xE0, 0x90, 0x90, 0x90, 0xE0, // D
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+        };
+
+        internal static readonly SDL.SDL_Scancode[] KeyMap =
+        {
+            SDL.SDL_Scancode.SDL_SCANCODE_1, // 1
+            SDL.SDL_Scancode.SDL_SCANCODE_2, // 2
+            SDL.SDL_Scancode.SDL_SCANCODE_3, // 3
+            SDL.SDL_Scancode.SDL_SCANCODE_4, // C
+
+            SDL.SDL_Scancode.SDL_SCANCODE_Q, // 4
+            SDL.SDL_Scancode.SDL_SCANCODE_W, // 5
+            SDL.SDL_Scancode.SDL_SCANCODE_E, // 6
+            SDL.SDL_Scancode.SDL_SCANCODE_R, // D
+
+            SDL.SDL_Scancode.SDL_SCANCODE_A, // 7
+            SDL.SDL_Scancode.SDL_SCANCODE_S, // 8
+            SDL.SDL_Scancode.SDL_SCANCODE_D, // 9
+            SDL.SDL_Scancode.SDL_SCANCODE_F, // E
+
+            SDL.SDL_Scancode.SDL_SCANCODE_Z, // A
+            SDL.SDL_Scancode.SDL_SCANCODE_X, // 0
+            SDL.SDL_Scancode.SDL_SCANCODE_C, // B
+            SDL.SDL_Scancode.SDL_SCANCODE_V, // F
         };
 
         // Timers

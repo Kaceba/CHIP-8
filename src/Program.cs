@@ -1,10 +1,13 @@
 using SDL2;
+using System.Runtime.InteropServices;
 using static CHIP_8.Constants;
 
 namespace CHIP_8;
 
 internal static class Program
 {
+
+    private static byte[]? _keyState;
     private static bool _isRunning = true;
     private static nint _window;
     private static nint _renderer;
@@ -87,8 +90,19 @@ internal static class Program
 
     private static void ReadInput()
     {
-        Cpu.Keys[0] = SDL.SDL_GetKeyboardState(out int numKeys)[SDL.SDL_SCANCODE_1] == 1;
-        return;
+        IntPtr state = SDL.SDL_GetKeyboardState(out int numKeys);
+        _keyState ??= new byte[numKeys];
+        Marshal.Copy(state, _keyState, 0, numKeys);
+
+        for (int i = 0; i < 16; i++)
+            Cpu.Keys[i] = _keyState[(int)KeyMap[i]] == 1;
+
+        // For debugging: print the state of the keys
+        for (int i = 0; i < 16; i++)
+        {
+            if (Cpu.Keys[i])
+                Console.WriteLine($"Key {i:X} is pressed.");
+        }
     }
 
     private static void HandleSDLEvents()
