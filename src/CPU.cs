@@ -60,8 +60,8 @@ namespace CHIP_8
                             _sp--;
                             Pc = _stack[_sp];
                             break;
-                        
-                        //0NNN: Calls RCA 1802 assembly programs, out of scope so not implemented
+
+                            //0NNN: Calls RCA 1802 assembly programs, out of scope so not implemented
                     }
                     break;
                 case 0x1:
@@ -74,11 +74,11 @@ namespace CHIP_8
                     Pc = nnn;
                     break;
                 case 0x3:
-                    if(_registers[x] == nn)
+                    if (_registers[x] == nn)
                         Pc += 2; //skip next instruction if VX == NN
                     break;
                 case 0x4:
-                    if(_registers[x] != nn)
+                    if (_registers[x] != nn)
                         Pc += 2; //skip next instruction if VX != NN
                     break;
                 case 0x5:
@@ -130,7 +130,7 @@ namespace CHIP_8
                     }
                     break;
                 case 0x9:
-                    if(_registers[x] != _registers[y])
+                    if (_registers[x] != _registers[y])
                         Pc += 2; //skip next instruction if VX != VY
                     break;
                 case 0xA:
@@ -152,7 +152,7 @@ namespace CHIP_8
                     }
                     break;
                 case 0xE:
-                    switch(nn)
+                    switch (nn)
                     {
                         case 0x9E:
                             if (Keys[_registers[x]])
@@ -165,58 +165,70 @@ namespace CHIP_8
                     }
                     break;
                 case 0xF:
-                switch (nn)
-                {
-                    case 0x1E:
+                    switch (nn)
+                    {
+                        case 0x1E:
                             _index = (ushort)((_index + _registers[x]) & 0xFFF); //FX1E: Add VX to I
-                        break;
-                    case 0x29:
-                        _index = (ushort)(FONTSET_START + (_registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
-                        break;
-                    case 0x33:
-                    {
-                        //FX33: Store BCD representation of VX in memory locations I, I+1, and I+2
-                        byte value = _registers[x];
-                        Memory[_index] = (byte)(value / 100); //hundreds
-                        Memory[_index + 1] = (byte)((value / 10) % 10); //tens
-                        Memory[_index + 2] = (byte)(value % 10); //ones
-                        break;
-                    }
-                    case 0x55:
-                    {
-                        //FX55: Store registers V0 through VX in memory starting at location I
-                        for (int i = 0; i <= x; i++)
-                        {
-                            Memory[_index + i] = _registers[i];
-                        }
-
-                        break;
-                    }
-                    case 0x65:
-                    {
-                        //FX65: Read registers V0 through VX from memory starting at location I
-                        for (int i = 0; i <= x; i++)
-                        {
-                            _registers[i] = Memory[_index + i];
-                        }
-
-                        break;
-                    }
-                    case 0x07:
-                        _registers[x] = DelayTimer; //FX07: Set VX to the value of the delay timer
-                        break;
-                    case 0x15:
-                        DelayTimer = _registers[x]; //FX15: Set the delay timer to VX
-                        break;
-                    case 0x18:
-                        SoundTimer = _registers[x]; //FX18: Set the sound timer to VX
-                        break;
-                    case 0x0A:
-                        //FX0A: Wait for a key press, store the value of the key in VX
-                        _registers[x] = WaitForKeyPress();
                             break;
-                }
-                break;
+                        case 0x29:
+                            _index = (ushort)(FONTSET_START + (_registers[x] * 5)); //FX29: Set I to the location of the sprite for the character in VX
+                            break;
+                        case 0x33:
+                            {
+                                //FX33: Store BCD representation of VX in memory locations I, I+1, and I+2
+                                byte value = _registers[x];
+                                Memory[_index] = (byte)(value / 100); //hundreds
+                                Memory[_index + 1] = (byte)((value / 10) % 10); //tens
+                                Memory[_index + 2] = (byte)(value % 10); //ones
+                                break;
+                            }
+                        case 0x55:
+                            {
+                                //FX55: Store registers V0 through VX in memory starting at location I
+                                for (int i = 0; i <= x; i++)
+                                {
+                                    Memory[_index + i] = _registers[i];
+                                }
+
+                                break;
+                            }
+                        case 0x65:
+                            {
+                                //FX65: Read registers V0 through VX from memory starting at location I
+                                for (int i = 0; i <= x; i++)
+                                {
+                                    _registers[i] = Memory[_index + i];
+                                }
+
+                                break;
+                            }
+                        case 0x07:
+                            _registers[x] = DelayTimer; //FX07: Set VX to the value of the delay timer
+                            break;
+                        case 0x15:
+                            DelayTimer = _registers[x]; //FX15: Set the delay timer to VX
+                            break;
+                        case 0x18:
+                            SoundTimer = _registers[x]; //FX18: Set the sound timer to VX
+                            break;
+                        case 0x0A:
+                            //FX0A: wait for a key press, store the value of the key in VX
+                            bool keyFound = false;
+                            for (byte k = 0; k < 16; k++)
+                            {
+                                if (Keys[k])
+                                {
+                                    _registers[x] = k;
+                                    keyFound = true;
+                                    break;
+                                }
+                            }
+
+                            if (!keyFound)
+                                Pc -= 2;   // stay on this instruction; it runs again next cycle
+                            break;
+                    }
+                    break;
             }
         }
 
